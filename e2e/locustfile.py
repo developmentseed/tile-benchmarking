@@ -39,7 +39,7 @@ def on_test_start(environment, **kwargs):
             variables[key] = value
 
         # Replace environment variables in the paths and append to the list
-        for url in lines[5:]:
+        for url in lines[4:]:
             paths.append(replace_variables(url.strip(), variables))
 
 class TilesUser(HttpUser):

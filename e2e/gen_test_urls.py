@@ -59,7 +59,7 @@ tms = morecantile.tms.get("WebMercatorQuad")
 # INPUTS
 
 minzoom = 0
-maxzoom = 8
+maxzoom = 7
 max_url = 100
 default_bounds = [-180, -90, 180, 90]
 
@@ -121,7 +121,7 @@ csv_columns = [
     "shape",
     "lat resolution",
     "lon resolution",
-    "chunk shape",
+    "chunks",
     "chunk size mb",
     "compression"
 ]
@@ -152,16 +152,14 @@ for key, value in sources.items():
         print(f"Failed to open {source} with error {e}")
         traceback.print_exc()
         continue
-    if drop_dim:
-        ds = ds.sel({drop_dim: value['drop_dim_value']}).drop(drop_dim)
     var = ds[variable]
-    shape = var.shape
+    shape = dict(zip(var.dims, var.shape))
     lat_resolution = np.diff(var["lat"].values).mean()
     lon_resolution = np.diff(var["lon"].values).mean()
     chunks = var.encoding.get("chunks", "N/A")
     dtype = var.encoding.get("dtype", "N/A")
-    chunk_shape = str(chunks)
-    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
+    chunks_dict = dict(zip(var.dims, chunks))
+    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024   
     compression = var.encoding.get("compressor", "N/A")
     with open(csv_file, "a", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
@@ -171,7 +169,7 @@ for key, value in sources.items():
             "shape": shape,
             "lat resolution": lat_resolution,
             "lon resolution": lon_resolution,
-            "chunk shape": chunk_shape,
+            "chunks": chunks_dict,
             "chunk size mb": chunk_size_mb,
             "compression": compression,
         })
