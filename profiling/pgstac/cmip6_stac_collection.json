@@ -1,0 +1,29 @@
+{
+    "id": "CMIP6_ensemble_median_TAS",
+    "stac_version": "1.0.0",
+    "license": "not-provided",
+    "title": "CMIP6 Ensemble Median of Near-Surface Air Temperature",
+    "type": "Collection",
+    "description": "CMIP6 Ensemble Median of Near-Surface Air Temperature",
+    "links":[],
+    "extent": {
+        "spatial": {
+            "bbox": [
+                [
+                    -180,
+                    -90,
+                    180,
+                    90
+                ]
+            ]
+        },
+        "temporal": {
+            "interval": [
+                [
+                    "1950-01-01T00:00:00.000Z",
+                    null
+                ]
+            ]
+        }
+    }
+}
