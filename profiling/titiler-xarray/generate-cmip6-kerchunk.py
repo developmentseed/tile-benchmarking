@@ -27,6 +27,15 @@ td = TemporaryDirectory()
 temp_dir = td.name
 print(f"Writing single file references to {temp_dir}")
 
+# !aws s3 ls s3://climatedashboard-data/cmip6/raw/monthly/CMIP6_ensemble_median/tas/
+
+# +
+#import xarray as xr
+
+#ds = xr.open_dataset(fs_read.open("s3://climatedashboard-data/cmip6/raw/monthly/CMIP6_ensemble_median/tas/tas_month_ensemble-median_historical_1953.nc"))
+
+# -
+
 # Use Kerchunk's `SingleHdf5ToZarr` method to create a `Kerchunk` index from a NetCDF file.
 def generate_json_reference(u, temp_dir: str):
     with fs_read.open(u, **so) as infile:
@@ -70,5 +79,5 @@ m = fs.get_mapper("")
 ds = xr.open_dataset(m, engine="zarr", backend_kwargs=dict(consolidated=False))
 print(ds)
 
-## Plot a slice of the dataset
+# # Plot a slice of the dataset
 # ds.isel(time=0).tas.plot()
