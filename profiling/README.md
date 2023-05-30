@@ -25,15 +25,13 @@ pypgstac load collections cmip6_stac_collection.json --dsn postgresql://username
 pypgstac load items cmip6_stac_items.ndjson --dsn postgresql://username:password@localhost:5439/postgis --method upsert
 ```
 
-3. Run the profiling
-
-```bash
-jupyter notebook # and then run the profile-pgstac.py file
-# or just
-python profile-pgstac.py
-```
-
 ## titiler-xarray
 
 The `titiler-xarray` directory contains scripts for generating test data for profiling titiler-xarray.
 
+## Profiling
+
+```bash
+jupyter notebook 
+# open profiling/profile.ipynb
+```
