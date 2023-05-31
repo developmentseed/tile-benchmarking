@@ -1,16 +1,15 @@
 geojson_pydantic
+loguru
 morecantile
 pillow
 psycopg
 psycopg_pool
 pypgstac
 pystac
-rio-tiler
 titiler-pgstac
 
 # titiler-xarray
 fsspec
 kerchunk
-titiler-xarray
 ujson
 xarray
