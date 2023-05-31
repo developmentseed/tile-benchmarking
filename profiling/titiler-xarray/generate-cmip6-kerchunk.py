@@ -14,9 +14,10 @@ fs_write = fsspec.filesystem("")
 files_paths = fs_read.glob("s3://climatedashboard-data/cmip6/raw/monthly/CMIP6_ensemble_median/tas/*")
 
 # Here we prepend the prefix 's3://', which points to AWS.
-subset_files = sorted(["s3://" + f for f in files_paths if "1950" in f or "1951" in f])
+subset_files = sorted(["s3://" + f for f in files_paths if ('month_ensemble-median' in f and ("1950" in f or "1951" in f))])
 
 print(f"{len(subset_files)} file paths were retrieved.")
+subset_files
 
 so = dict(mode="rb", anon=True, default_fill_cache=False, default_cache_type="first")
 output_dir = "./"
@@ -26,15 +27,6 @@ output_dir = "./"
 td = TemporaryDirectory()
 temp_dir = td.name
 print(f"Writing single file references to {temp_dir}")
-
-# !aws s3 ls s3://climatedashboard-data/cmip6/raw/monthly/CMIP6_ensemble_median/tas/
-
-# +
-#import xarray as xr
-
-#ds = xr.open_dataset(fs_read.open("s3://climatedashboard-data/cmip6/raw/monthly/CMIP6_ensemble_median/tas/tas_month_ensemble-median_historical_1953.nc"))
-
-# -
 
 # Use Kerchunk's `SingleHdf5ToZarr` method to create a `Kerchunk` index from a NetCDF file.
 def generate_json_reference(u, temp_dir: str):
