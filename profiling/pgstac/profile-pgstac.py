@@ -1,47 +1,130 @@
-from geojson_pydantic import Polygon
 import io
-from titiler.pgstac import model
-from psycopg_pool import ConnectionPool
-from titiler.pgstac.mosaic import PGSTACBackend
-from psycopg.rows import class_row
-import morecantile
-from typing import Any, Dict, List, Tuple
-from rio_tiler.mosaic import mosaic_reader
-from rio_tiler.models import ImageData
-from PIL import Image
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, Union
 
-from profiler.main import profile
+import morecantile
+from geojson_pydantic import Polygon
+from PIL import Image
+from profiler.main import Timer, profile
+from psycopg.rows import class_row
+from psycopg_pool import ConnectionPool
+from rasterio.crs import CRS
+from rio_tiler.constants import MAX_THREADS
+from rio_tiler.errors import EmptyMosaicError, TileOutsideBounds
+from rio_tiler.models import ImageData
+from rio_tiler.mosaic.methods.defaults import FirstMethod
+from rio_tiler.tasks import create_tasks, filter_tasks
+from rio_tiler.types import BBox
+from rio_tiler.utils import _chunks
+from titiler.pgstac import model
+from titiler.pgstac.mosaic import PGSTACBackend
 
 
 def pgstac_search():
     return model.PgSTACSearch(
         collections=["CMIP6_ensemble_median_TAS"],
         datetime="1950-04-01T00:00:00Z",
-        bbox=[-180, -90, 180, 90]
+        bbox=[-180, -90, 180, 90],
     )
 
 
 def pgstac_metadata():
     return model.Metadata(
-        type='mosaic',
+        type="mosaic",
         bounds=None,
         minzoom=None,
         maxzoom=None,
         name=None,
-        assets=['data'],
-        defaults={}
+        assets=["data"],
+        defaults={},
     )
 
 
-pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis") 
+def mosaic_reader(
+    mosaic_assets: Sequence,
+    reader: Callable[..., ImageData],
+    *args: Any,
+    chunk_size: Optional[int] = None,
+    threads: int = MAX_THREADS,
+    allowed_exceptions: Tuple = (TileOutsideBounds,),
+    **kwargs,
+) -> Tuple[ImageData, List]:
+    """Custom version of rio_tiler.mosaic.mosaic_reader."""
+    pixel_selection = FirstMethod()
+
+    if not chunk_size:
+        chunk_size = threads if threads > 1 else len(mosaic_assets)
+
+    assets_used: List = []
+    get_tile_timings: List = []
+
+    crs: Optional[CRS]
+    bounds: Optional[BBox]
+    band_names: List[str]
+
+    # Distribute the assets in chunks (to be processed in parallel)
+    # see https://cogeotiff.github.io/rio-tiler/mosaic/#smart-multi-threading
+    for chunks in _chunks(mosaic_assets, chunk_size):
+        tasks = create_tasks(reader, chunks, threads, *args, **kwargs)
+        for img, asset in filter_tasks(
+            tasks,
+            allowed_exceptions=allowed_exceptions,
+        ):
+            crs = img.crs
+            bounds = img.bounds
+            band_names = img.band_names
+
+            # Retrieve the `timing` we set
+            get_tile_timings.append(img.metadata.get("timing"))
+
+            assets_used.append(asset)
+            pixel_selection.feed(img.as_masked())
+
+            if pixel_selection.is_done:
+                data, mask = pixel_selection.data
+                return (
+                    ImageData(
+                        data,
+                        mask,
+                        assets=assets_used,
+                        crs=crs,
+                        bounds=bounds,
+                        band_names=band_names,
+                        # add `get_tile_timings` in the ImageData metadata
+                        metadata={"get_tile_timings": get_tile_timings},
+                    ),
+                    assets_used,
+                )
+
+    data, mask = pixel_selection.data
+    if data is None:
+        raise EmptyMosaicError("Method returned an empty array")
+
+    return (
+        ImageData(
+            data,
+            mask,
+            assets=assets_used,
+            crs=crs,
+            bounds=bounds,
+            band_names=band_names,
+            metadata={"get_tile_timings": get_tile_timings},
+        ),
+        assets_used,
+    )
+
+
+pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis")
 
 """Create map tile."""
+
+
 @profile(add_to_return=True, cprofile=True, quiet=True)
 def tile(
     tile_x: int,
     tile_y: int,
     tile_z: int,
 ) -> Tuple[ImageData, List[str]]:
+    timings = {}
 
     with pool.connection() as conn:
         with conn.cursor(row_factory=class_row(model.Search)) as cursor:
@@ -54,34 +137,54 @@ def tile(
             )
             search_info = cursor.fetchone()
             mosaic_id = search_info.id
-    
+
     backend = PGSTACBackend(pool=pool, input=mosaic_id)
-    
+
     def assets_for_tile(x: int, y: int, z: int) -> List[Dict]:
         """Retrieve assets for tile."""
         bbox = backend.tms.bounds(morecantile.Tile(x, y, z))
-        return backend.get_assets(Polygon.from_bounds(*bbox))    
-    
+        return backend.get_assets(Polygon.from_bounds(*bbox))
+
     """Get Tile from multiple observation."""
-    mosaic_assets = assets_for_tile(
-        tile_x,
-        tile_y,
-        tile_z,
-    )
+
+    # PGSTAC Timing
+    with Timer() as t:
+        mosaic_assets = assets_for_tile(
+            tile_x,
+            tile_y,
+            tile_z,
+        )
+        find_assets = t.from_start
+        timings["pgstac-search"] = round(find_assets * 1000, 2)
 
     def _reader(
         item: Dict[str, Any], x: int, y: int, z: int, **kwargs: Any
     ) -> ImageData:
-        with backend.reader(item, tms=backend.tms, **backend.reader_options) as src_dst:
-            return src_dst.tile(x, y, z, **kwargs)
+        # GET TILE Timing
+        with Timer() as t:
+            with backend.reader(
+                item, tms=backend.tms, **backend.reader_options
+            ) as src_dst:
+                img = src_dst.tile(x, y, z, **kwargs)
+                read_tile = t.from_start
+                img.metadata = {"timing": read_tile}
 
-    return mosaic_reader(mosaic_assets, _reader, tile_x, tile_y, tile_z, **{"assets": ["data"]})  
+        return img
+
+    # MOSAIC Timing
+    with Timer() as t:
+        img, assets = mosaic_reader(
+            mosaic_assets, _reader, tile_x, tile_y, tile_z, **{"assets": ["data"]}
+        )
+        timings["get_tile"] = img.metadata["get_tile_timings"]
+        timings["mosaic"] = round(t.from_start * 1000, 2)
+
+    return img, assets
+
 
 # +
-image_and_assets, logs = tile(0,0,0)
-content = image_and_assets[0].render(
-    img_format='PNG'
-)
+image_and_assets, logs = tile(0, 0, 0)
+content = image_and_assets[0].render(img_format="PNG")
 
 im = Image.open(io.BytesIO(content))
 im
