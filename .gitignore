@@ -3,3 +3,4 @@ profiling/titiler-xarray/*.json
 __pycache__
 .pgdata
 .ipynb_checkpoints
+venv*

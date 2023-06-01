@@ -4,6 +4,7 @@ morecantile
 pillow
 psycopg
 psycopg_pool
+psycopg_binary
 pypgstac
 pystac
 titiler-pgstac
