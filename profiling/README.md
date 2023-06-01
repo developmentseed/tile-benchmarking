@@ -30,7 +30,7 @@ The `pgstac` directory contains scripts for generating test data for profiling p
 
 ```bash
 cd ../pgstac
-docker-compose up database -d
+docker-compose up database
 pypgstac load collections cmip6_stac_collection.json --dsn postgresql://username:password@localhost:5439/postgis --method upsert
 pypgstac load items cmip6_stac_items.ndjson --dsn postgresql://username:password@localhost:5439/postgis --method upsert
 ```

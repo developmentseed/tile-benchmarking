@@ -1,5 +1,5 @@
 import io
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, Union, Optional
 
 import morecantile
 from geojson_pydantic import Polygon
@@ -154,8 +154,8 @@ def tile(
             tile_y,
             tile_z,
         )
-        find_assets = t.from_start
-        timings["pgstac-search"] = round(find_assets * 1000, 2)
+    find_assets = t.elapsed
+    timings["pgstac-search"] = round(find_assets * 1000, 2)
 
     def _reader(
         item: Dict[str, Any], x: int, y: int, z: int, **kwargs: Any
@@ -166,8 +166,8 @@ def tile(
                 item, tms=backend.tms, **backend.reader_options
             ) as src_dst:
                 img = src_dst.tile(x, y, z, **kwargs)
-                read_tile = t.from_start
-                img.metadata = {"timing": read_tile}
+        read_tile = t.elapsed
+        img.metadata = {"timing": read_tile}
 
         return img
 
@@ -176,8 +176,8 @@ def tile(
         img, assets = mosaic_reader(
             mosaic_assets, _reader, tile_x, tile_y, tile_z, **{"assets": ["data"]}
         )
-        timings["get_tile"] = img.metadata["get_tile_timings"]
-        timings["mosaic"] = round(t.from_start * 1000, 2)
+    timings["get_tile"] = img.metadata["get_tile_timings"]
+    timings["mosaic"] = round(t.elapsed * 1000, 2)
 
     return img, assets
 
