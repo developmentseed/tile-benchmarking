@@ -177,5 +177,6 @@ def tile(
         )
     timings["get_tile"] = img.metadata["get_tile_timings"]
     timings["mosaic"] = round(t.elapsed * 1000, 2)
+    print(timings)
 
     return img, assets

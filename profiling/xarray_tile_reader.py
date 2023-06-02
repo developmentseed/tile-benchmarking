@@ -10,7 +10,7 @@ from rasterio.transform import from_bounds
 from rio_tiler.errors import TileOutsideBounds
 from rio_tiler.io import XarrayReader
 from rio_tiler.models import ImageData
-from rio_tiler.types import WarpResampling
+from rasterio.enums import Resampling
 from profiler.main import Timer
 
 try:
@@ -32,7 +32,7 @@ class XarrayTileReader(XarrayReader):
         tile_y: int,
         tile_z: int,
         tilesize: int = 256,
-        resampling_method: WarpResampling = "nearest",
+        resampling_method: Resampling = "nearest",
         auto_expand: bool = True,
     ) -> ImageData:
         """Read a Web Map tile from a dataset.

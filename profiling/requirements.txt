@@ -7,6 +7,7 @@ psycopg_pool
 psycopg_binary
 pypgstac
 pystac
+rio-tiler
 titiler-pgstac
 
 # titiler-xarray
