@@ -60,7 +60,7 @@ def mosaic_reader(
     crs: Optional[CRS]
     bounds: Optional[BBox]
     band_names: List[str]
-
+  
     # Distribute the assets in chunks (to be processed in parallel)
     # see https://cogeotiff.github.io/rio-tiler/mosaic/#smart-multi-threading
     for chunks in _chunks(mosaic_assets, chunk_size):
@@ -116,7 +116,6 @@ def mosaic_reader(
 pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis")
 
 """Create map tile."""
-
 
 @profile(add_to_return=True, cprofile=True, quiet=True)
 def tile(
@@ -180,14 +179,3 @@ def tile(
     timings["mosaic"] = round(t.elapsed * 1000, 2)
 
     return img, assets
-
-
-# +
-image_and_assets, logs = tile(0, 0, 0)
-content = image_and_assets[0].render(img_format="PNG")
-
-im = Image.open(io.BytesIO(content))
-im
-# -
-
-logs
