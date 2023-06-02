@@ -4,9 +4,5 @@ profiling/titiler-xarray/*.json
 __pycache__
 .pgdata
 .ipynb_checkpoints
-<<<<<<< HEAD
 venv*
 .vscode
-=======
-
->>>>>>> 36991d735b8b8d6faac0c9c0060e09d1d9f25e96
