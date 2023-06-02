@@ -11,19 +11,33 @@ from rasterio.crs import CRS
 from rio_tiler.constants import MAX_THREADS
 from rio_tiler.errors import EmptyMosaicError, TileOutsideBounds
 from rio_tiler.models import ImageData
-from rio_tiler.mosaic.methods.defaults import FirstMethod
+from rio_tiler.mosaic.methods.defaults import HighestMethod
 from rio_tiler.tasks import create_tasks, filter_tasks
 from rio_tiler.types import BBox
 from rio_tiler.utils import _chunks
 from titiler.pgstac import model
 from titiler.pgstac.mosaic import PGSTACBackend
 
-
+temporal_filter = {
+    "limit": 100,
+    "op": "or",
+    "args": [
+        {
+            "op": "=",
+            "args": [{"property": "datetime"}, "1950-04-01T00:00:00Z"]
+        },
+        {
+            "op": "=",
+            "args": [{"property": "datetime"}, "1951-04-01T00:00:00Z"]
+        }        
+    ]
+}
 def pgstac_search():
     return model.PgSTACSearch(
         collections=["CMIP6_ensemble_median_TAS"],
-        datetime="1950-04-01T00:00:00Z",
+        filter=temporal_filter,
         bbox=[-180, -90, 180, 90],
+        limit=100
     )
 
 
@@ -49,7 +63,7 @@ def mosaic_reader(
     **kwargs,
 ) -> Tuple[ImageData, List]:
     """Custom version of rio_tiler.mosaic.mosaic_reader."""
-    pixel_selection = FirstMethod()
+    pixel_selection = HighestMethod()
 
     if not chunk_size:
         chunk_size = threads if threads > 1 else len(mosaic_assets)
@@ -64,6 +78,7 @@ def mosaic_reader(
     # Distribute the assets in chunks (to be processed in parallel)
     # see https://cogeotiff.github.io/rio-tiler/mosaic/#smart-multi-threading
     for chunks in _chunks(mosaic_assets, chunk_size):
+        print(mosaic_assets)
         tasks = create_tasks(reader, chunks, threads, *args, **kwargs)
         for img, asset in filter_tasks(
             tasks,
@@ -117,7 +132,7 @@ pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/po
 
 """Create map tile."""
 
-@profile(add_to_return=True, cprofile=True, quiet=True)
+@profile(add_to_return=True, cprofile=True, quiet=True, log_library='rasterio')
 def tile(
     tile_x: int,
     tile_y: int,
@@ -135,6 +150,7 @@ def tile(
                 ),
             )
             search_info = cursor.fetchone()
+            print(search_info)
             mosaic_id = search_info.id
 
     backend = PGSTACBackend(pool=pool, input=mosaic_id)

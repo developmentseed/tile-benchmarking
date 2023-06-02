@@ -51,7 +51,7 @@ class Logger():
         """Stop timer."""
         self.logger.removeHandler(self.handler)
         log_lines = self.log_stream.getvalue().splitlines()
-        # results = parse_logs(log_lines)
+#         results = parse_logs(log_lines)
         [print(log_line) for log_line in log_lines]
         self.handler.close()  
     
