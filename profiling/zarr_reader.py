@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 import attr
 import fsspec
 import numpy
+import rioxarray
 import xarray
 from profiler.main import Timer
 
@@ -36,7 +37,7 @@ def xarray_open_dataset(
 
     with Timer() as t:
         ds = xarray.open_dataset(src_path, **xr_open_args)
-    print(f"Time elapsed for xarray.open_datset: {round(t.elapsed * 1000, 5)}")
+    print(f"Time elapsed for xarray.open_datset: {round(t.elapsed * 1000, 2)}")
     return ds
 
 
@@ -61,13 +62,13 @@ def get_variable(
 
             # Sort the dataset by the updated longitude coordinates
             da = da.sortby(da.x)
-    print(f"Time elapsed for adjusting longitudes: {round(t.elapsed * 1000, 5)}")
+    print(f"Time elapsed for adjusting longitudes: {round(t.elapsed * 1000, 2)}")
 
     # Make sure we have a valid CRS
     with Timer() as t:
         crs = da.rio.crs or "epsg:4326"
         da.rio.write_crs(crs, inplace=True)
-    print(f"Time elapsed for writing CRS: {round(t.elapsed * 1000, 5)}") 
+    print(f"Time elapsed for writing CRS: {round(t.elapsed * 1000, 2)}") 
 
     # TODO - address this time_slice issue
     with Timer() as t:
