@@ -1,3 +1,4 @@
+import attr
 import io
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, Union, Optional
 
@@ -11,31 +12,25 @@ from rasterio.crs import CRS
 from rio_tiler.constants import MAX_THREADS
 from rio_tiler.errors import EmptyMosaicError, TileOutsideBounds
 from rio_tiler.models import ImageData
-from rio_tiler.mosaic.methods.defaults import HighestMethod
+from rio_tiler.mosaic.methods.defaults import FirstMethod, HighestMethod
 from rio_tiler.tasks import create_tasks, filter_tasks
 from rio_tiler.types import BBox
 from rio_tiler.utils import _chunks
 from titiler.pgstac import model
 from titiler.pgstac.mosaic import PGSTACBackend
 
-temporal_filter = {
-    "limit": 100,
-    "op": "or",
-    "args": [
-        {
-            "op": "=",
-            "args": [{"property": "datetime"}, "1950-04-01T00:00:00Z"]
-        },
-        {
-            "op": "=",
-            "args": [{"property": "datetime"}, "1951-04-01T00:00:00Z"]
-        }        
-    ]
-}
-def pgstac_search():
+import titiler.pgstac.mosaic
+
+import rasterio
+from rio_tiler.constants import WEB_MERCATOR_TMS, WGS84_CRS
+from morecantile import TileMatrixSet
+from rio_tiler.io import Reader
+from rio_tiler.io.base import BaseReader, MultiBaseReader
+
+def pgstac_search(query: Dict):
     return model.PgSTACSearch(
-        collections=["CMIP6_ensemble_median_TAS"],
-        filter=temporal_filter,
+        collections=query['collections'],
+        filter=query,
         bbox=[-180, -90, 180, 90],
         limit=100
     )
@@ -78,7 +73,6 @@ def mosaic_reader(
     # Distribute the assets in chunks (to be processed in parallel)
     # see https://cogeotiff.github.io/rio-tiler/mosaic/#smart-multi-threading
     for chunks in _chunks(mosaic_assets, chunk_size):
-        print(mosaic_assets)
         tasks = create_tasks(reader, chunks, threads, *args, **kwargs)
         for img, asset in filter_tasks(
             tasks,
@@ -137,6 +131,7 @@ def tile(
     tile_x: int,
     tile_y: int,
     tile_z: int,
+    query: Dict,
 ) -> Tuple[ImageData, List[str]]:
     timings = {}
 
@@ -145,12 +140,11 @@ def tile(
             cursor.execute(
                 "SELECT * FROM search_query(%s, _metadata => %s);",
                 (
-                    pgstac_search().json(by_alias=True, exclude_none=True),
+                    pgstac_search(query).json(by_alias=True, exclude_none=True),
                     pgstac_metadata().json(exclude_none=True),
                 ),
             )
             search_info = cursor.fetchone()
-            print(search_info)
             mosaic_id = search_info.id
 
     backend = PGSTACBackend(pool=pool, input=mosaic_id)
@@ -158,7 +152,7 @@ def tile(
     def assets_for_tile(x: int, y: int, z: int) -> List[Dict]:
         """Retrieve assets for tile."""
         bbox = backend.tms.bounds(morecantile.Tile(x, y, z))
-        return backend.get_assets(Polygon.from_bounds(*bbox))
+        return backend.get_assets(Polygon.from_bounds(*bbox), skipcovered=False)
 
     """Get Tile from multiple observation."""
 
@@ -180,8 +174,10 @@ def tile(
             with backend.reader(
                 item, tms=backend.tms, **backend.reader_options
             ) as src_dst:
+                print(f"src_dst is {src_dst}")
+                print(f"In profile pgstac, starting src_dst.tile")
                 img = src_dst.tile(x, y, z, **kwargs)
-        read_tile = t.elapsed
+        read_tile = round(t.elapsed * 1000, 2)
         img.metadata = {"timing": read_tile}
 
         return img
