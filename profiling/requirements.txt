@@ -1,4 +1,5 @@
 geojson_pydantic
+ipykernel
 loguru
 morecantile
 pillow
