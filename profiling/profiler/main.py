@@ -51,13 +51,11 @@ class Logger():
         """Stop timer."""
         self.logger.removeHandler(self.handler)
         log_lines = self.log_stream.getvalue().splitlines()
-#         results = parse_logs(log_lines)
-        [print(log_line) for log_line in log_lines]
+        results = parse_logs(log_lines)
         self.handler.close()  
     
 def parse_logs(logs: List[str]) -> Dict:
     """Parse S3FS Logs."""
-    [print(log_line) for log_line in logs]
     s3_get = len([line for line in logs if "get_object" in line])
     s3_head = len([line for line in logs if "head_object" in line])
     s3_list = len([line for line in logs if "list_object" in line])

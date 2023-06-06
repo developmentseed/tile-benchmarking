@@ -11,7 +11,8 @@ from rio_tiler.errors import TileOutsideBounds
 from rio_tiler.io import XarrayReader
 from rio_tiler.models import ImageData
 from rasterio.enums import Resampling
-from profiler.main import Timer
+from profiler.main import Timer, profile
+import zarr_reader
 
 try:
     import xarray
@@ -54,9 +55,7 @@ class XarrayTileReader(XarrayReader):
                 f"Tile {tile_z}/{tile_x}/{tile_y} is outside bounds"
             )
 
-        with Timer() as t:
-            tile_bounds = self.tms.xy_bounds(Tile(x=tile_x, y=tile_y, z=tile_z))
-        print(f"Time elapsed for xy bounds: {round(t.elapsed * 1000, 5)}")
+        tile_bounds = self.tms.xy_bounds(Tile(x=tile_x, y=tile_y, z=tile_z))
 
         # Create source array by clipping the xarray dataset to extent of the tile.
         with Timer() as t:
@@ -65,8 +64,8 @@ class XarrayTileReader(XarrayReader):
                 crs=self.tms.rasterio_crs,
                 auto_expand=auto_expand,
             )
-        print(f"Time elapsed for clip_box: {round(t.elapsed * 1000, 5)}")
-
+        print(f"Time elapsed for clipping data via rasterio: {round(t.elapsed * 1000, 5)}")
+        
         with Timer() as t:
             ds = ds.rio.reproject(
                 self.tms.rasterio_crs,
@@ -92,6 +91,22 @@ class XarrayTileReader(XarrayReader):
                 dataset_statistics=stats,
                 band_names=band_names,
             )
-        print(f"Time elapsed for ImageData: {round(t.elapsed * 1000, 5)}")
+        print(f"Time elapsed for creating ImageData: {round(t.elapsed * 1000, 5)}")
 
         return image_data
+ 
+@profile(add_to_return=True, cprofile=True, quiet=True, log_library='s3fs')
+def tile(src_path: str, x: int, y: int, z: int, *, variable: str, time_slice: str = None, **kwargs: Any):
+
+    with zarr_reader.xarray_open_dataset(
+        src_path,
+        decode_times=False,
+        **kwargs,
+    ) as dataset:
+        with Timer() as t:
+            dataarray = zarr_reader.get_variable(dataset, variable=variable, time_slice=time_slice)
+        print(f"Time elapsed for dimension arrangement and array pre-processing: {round(t.elapsed * 1000, 2)}")
+        
+        with XarrayTileReader(dataarray) as src_dst:
+            return src_dst.tile(x, y, z)
+

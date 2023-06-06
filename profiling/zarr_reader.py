@@ -55,14 +55,12 @@ def get_variable(
 
     da = ds[variable]
 
-    with Timer() as t:
-        if (da.x > 180).any():
-            # Adjust the longitude coordinates to the -180 to 180 range
-            da = da.assign_coords(x=(da.x + 180) % 360 - 180)
+    if (da.x > 180).any():
+        # Adjust the longitude coordinates to the -180 to 180 range
+        da = da.assign_coords(x=(da.x + 180) % 360 - 180)
 
-            # Sort the dataset by the updated longitude coordinates
-            da = da.sortby(da.x)
-    print(f"Time elapsed for adjusting longitudes: {round(t.elapsed * 1000, 2)}")
+        # Sort the dataset by the updated longitude coordinates
+        da = da.sortby(da.x)
 
     # Make sure we have a valid CRS
     with Timer() as t:

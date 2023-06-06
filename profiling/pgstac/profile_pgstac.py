@@ -171,14 +171,12 @@ def tile(
     ) -> ImageData:
         # GET TILE Timing
         with Timer() as t:
-            with backend.reader(
-                item, tms=backend.tms, **backend.reader_options
-            ) as src_dst:
-                print(f"src_dst is {src_dst}")
-                print(f"In profile pgstac, starting src_dst.tile")
-                img = src_dst.tile(x, y, z, **kwargs)
-        read_tile = round(t.elapsed * 1000, 2)
-        img.metadata = {"timing": read_tile}
+            src_dst = backend.reader(item, tms=backend.tms, **backend.reader_options)
+        read_time = round(t.elapsed * 1000, 2)
+        with Timer() as t:
+            img = src_dst.tile(x, y, z, **kwargs)
+        tile_time = round(t.elapsed * 1000, 2)
+        img.metadata = {"timing": [read_time, tile_time]}
 
         return img
 
