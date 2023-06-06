@@ -6,6 +6,8 @@ These scripts are used to generate test data and for profiling tiling code.
 
 Create a virtual environment and install dependencies.
 
+Note: Some of the timings require custom versions of rio_tiler modules. So it is important to override the installed versions with those checked into git for this repo.
+
     ```bash
     cd profiling
     # deactivate any existing virtual environment
