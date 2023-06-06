@@ -14,6 +14,7 @@ def xarray_open_dataset(
     src_path: str,
     group: Optional[Any] = None,
     reference: Optional[bool] = False,
+    anon: Optional[bool] = True,
     decode_times: Optional[bool] = True,
 ) -> xarray.Dataset:
     """Open dataset."""
@@ -30,7 +31,7 @@ def xarray_open_dataset(
         fs = fsspec.filesystem(
             "reference",
             fo=src_path,
-            remote_options={"anon": True},
+            remote_options={"anon": anon},
         )
         src_path = fs.get_mapper("")
         xr_open_args["backend_kwargs"] = {"consolidated": False}
@@ -63,26 +64,22 @@ def get_variable(
         da = da.sortby(da.x)
 
     # Make sure we have a valid CRS
-    with Timer() as t:
-        crs = da.rio.crs or "epsg:4326"
-        da.rio.write_crs(crs, inplace=True)
-    print(f"Time elapsed for writing CRS: {round(t.elapsed * 1000, 2)}") 
+    crs = da.rio.crs or "epsg:4326"
+    da.rio.write_crs(crs, inplace=True)
 
     # TODO - address this time_slice issue
-    with Timer() as t:
-        if "time" in da.dims:
-            if time_slice:
-                time_as_str = time_slice.split("T")[0]
-                # TODO(aimee): when do we actually need multiple slices of data?
-                # Perhaps if aggregating for coverage?
-                # ds = ds[time_slice : time_slice + 1]
-                if da["time"].dtype == "O":
-                    da["time"] = da["time"].astype("datetime64[ns]")
-                da = da.sel(
-                    time=numpy.array(time_as_str, dtype=numpy.datetime64), method="nearest"
-                )
-            else:
-                da = da.isel(time=0)
-    print(f"Time elapsed for time slice: {round(t.elapsed * 1000, 5)}")
+    if "time" in da.dims:
+        if time_slice:
+            time_as_str = time_slice.split("T")[0]
+            # TODO(aimee): when do we actually need multiple slices of data?
+            # Perhaps if aggregating for coverage?
+            # ds = ds[time_slice : time_slice + 1]
+            if da["time"].dtype == "O":
+                da["time"] = da["time"].astype("datetime64[ns]")
+            da = da.sel(
+                time=numpy.array(time_as_str, dtype=numpy.datetime64), method="nearest"
+            )
+        else:
+            da = da.isel(time=0)
 
     return da
