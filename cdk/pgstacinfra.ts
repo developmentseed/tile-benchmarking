@@ -22,9 +22,7 @@ export class PgStacInfra extends Stack {
         version: rds.PostgresEngineVersion.VER_14,
       }),
       vpcSubnets: {
-        subnetType: props.dbSubnetPublic
-          ? ec2.SubnetType.PUBLIC
-          : ec2.SubnetType.PRIVATE_ISOLATED,
+        subnetType: ec2.SubnetType.PUBLIC
       },
       allocatedStorage: 1024,
       publiclyAccessible: true
