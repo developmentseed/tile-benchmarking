@@ -1,2 +1,16 @@
 .ipynb_checkpoints
 __pycache__
+
+# Javascript libraries and compiled files
+*.js
+*.js.map
+!jest.config.js
+*.d.ts
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# TODO: Remove this once profiling is merged into main
+profiling/
