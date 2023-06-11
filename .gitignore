@@ -1,6 +1,3 @@
-.ipynb_checkpoints
-__pycache__
-
 # Javascript libraries and compiled files
 *.js
 *.js.map
@@ -12,5 +9,8 @@ node_modules
 .cdk.staging
 cdk.out
 
-# TODO: Remove this once profiling is merged into main
-profiling/
+.pgdata
+.ipynb_checkpoints
+venv*
+.venv
+.vscode

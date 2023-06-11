@@ -1,0 +1,20 @@
+geojson_pydantic
+ipykernel
+loguru
+morecantile
+pillow
+psycopg
+psycopg_pool
+psycopg_binary
+pypgstac
+pystac
+s3fs
+rio-tiler
+rioxarray
+titiler-pgstac
+
+# titiler-xarray
+fsspec
+kerchunk
+ujson
+xarray
