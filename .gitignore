@@ -8,7 +8,7 @@ node_modules
 # CDK asset staging directory
 .cdk.staging
 cdk.out
-
+__pycache__
 .pgdata
 .ipynb_checkpoints
 venv*
