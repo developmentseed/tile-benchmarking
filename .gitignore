@@ -1,3 +1,5 @@
+.vscode
+
 # Javascript libraries and compiled files
 *.js
 *.js.map
@@ -8,11 +10,11 @@ node_modules
 # CDK asset staging directory
 .cdk.staging
 cdk.out
-__pycache__
+
+# Ignore local pgSTAC database files
 .pgdata
+
+# Ignore python's local cache and environment files
+__pycache__
 .ipynb_checkpoints
-venv*
-.venv
-.vscode
-node_modules
-cdk.out
+*venv*
