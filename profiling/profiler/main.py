@@ -7,10 +7,9 @@ import logging
 import pstats
 import time
 from io import StringIO
-from typing import Callable, Dict, List, Optional
+from typing import Callable
 
 from loguru import logger as log
-
 
 # This code is copied from marblecutter
 #  https://github.com/mojodna/marblecutter/blob/master/marblecutter/stats.py
@@ -35,7 +34,8 @@ class Timer(object):
 
 
 class Logger():
-    def __init__(self, log_library):
+    def __init__(self, quiet, log_library):
+        self.quiet = quiet
         self.log_library = log_library
 
     def __enter__(self):
@@ -51,27 +51,15 @@ class Logger():
         """Stop timer."""
         self.logger.removeHandler(self.handler)
         log_lines = self.log_stream.getvalue().splitlines()
-        results = parse_logs(log_lines)
+        if not self.quiet:
+            print(log_lines)
         self.handler.close()  
-    
-def parse_logs(logs: List[str]) -> Dict:
-    """Parse S3FS Logs."""
-    s3_get = len([line for line in logs if "get_object" in line])
-    s3_head = len([line for line in logs if "head_object" in line])
-    s3_list = len([line for line in logs if "list_object" in line])
-    return {
-        "LIST": s3_list,
-        "HEAD": s3_head,
-        "GET": s3_get,
-    }
 
 
 def profile(
     add_to_return: bool = False,
     quiet: bool = False,
-    raw: bool = False,
     cprofile: bool = False,
-    config: Optional[Dict] = None,
     log_library: str = 's3fs'
 ):
     """Profiling."""
@@ -83,7 +71,7 @@ def profile(
             """Wrapped function."""
             results = {}
 
-            with Logger(log_library=log_library) as l:
+            with Logger(quiet=quiet, log_library=log_library) as l:
                 with Timer() as t:
                     # cProfile is a simple Python profiling
                     prof = cProfile.Profile()
