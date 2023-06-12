@@ -42,7 +42,7 @@ pypgstac load items cmip6_stac_items.ndjson --dsn postgresql://username:password
 
 ### Option 2: Seed a rempote pgSTAC database with test database
 
-A pgSTAC database is deployed via Github workflows using cdk-pgstac. Access to the database is restricted to certain IPs. If you're IP has been added to the database security group, you can run the following code to seed the database:
+A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)). Access to the database is restricted to certain IPs. If your IP has been added to the database security group, you can run the following code to seed the database:
 
 ```bash
 cd pgstac
