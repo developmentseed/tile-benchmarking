@@ -12,7 +12,6 @@ on:
         required: true
 
 env:
-  BUCKET_NAME : "nasa-eodc-data-store"
   AWS_REGION : "us-west-2"
 # permission can be added at job level or workflow level    
 permissions:
