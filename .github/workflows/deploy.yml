@@ -3,7 +3,7 @@ name: Deploy pgSTAC to AWS
 on:
   push:
     branches:
-      - feat/deploy-pgstac
+      - main
   # enable a workflow to be triggered manually
   workflow_dispatch:
     inputs:
