@@ -1,10 +1,7 @@
-import attr
-import io
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, Union, Optional
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Optional
 
 import morecantile
 from geojson_pydantic import Polygon
-from PIL import Image
 from profiler.main import Timer, profile
 from psycopg.rows import class_row
 from psycopg_pool import ConnectionPool
@@ -12,20 +9,12 @@ from rasterio.crs import CRS
 from rio_tiler.constants import MAX_THREADS
 from rio_tiler.errors import EmptyMosaicError, TileOutsideBounds
 from rio_tiler.models import ImageData
-from rio_tiler.mosaic.methods.defaults import FirstMethod, HighestMethod
+from rio_tiler.mosaic.methods.defaults import FirstMethod
 from rio_tiler.tasks import create_tasks, filter_tasks
 from rio_tiler.types import BBox
 from rio_tiler.utils import _chunks
 from titiler.pgstac import model
 from titiler.pgstac.mosaic import PGSTACBackend
-
-import titiler.pgstac.mosaic
-
-import rasterio
-from rio_tiler.constants import WEB_MERCATOR_TMS, WGS84_CRS
-from morecantile import TileMatrixSet
-from rio_tiler.io import Reader
-from rio_tiler.io.base import BaseReader, MultiBaseReader
 
 def pgstac_search(query: Dict):
     return model.PgSTACSearch(
@@ -58,7 +47,7 @@ def mosaic_reader(
     **kwargs,
 ) -> Tuple[ImageData, List]:
     """Custom version of rio_tiler.mosaic.mosaic_reader."""
-    pixel_selection = HighestMethod()
+    pixel_selection = FirstMethod()
 
     if not chunk_size:
         chunk_size = threads if threads > 1 else len(mosaic_assets)

@@ -6,3 +6,5 @@ __pycache__
 .ipynb_checkpoints
 venv*
 .vscode
+node_modules
+cdk.out
