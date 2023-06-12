@@ -2,7 +2,7 @@
 
 These scripts are used to generate test data and for profiling tiling code.
 
-## Environment Setup
+## Step 1: Setup your environment
 
 Create a virtual environment and install dependencies.
 
@@ -20,24 +20,33 @@ Note: Some of the timings require custom versions of rio_tiler modules. So it is
     python3.9 -m ipykernel install --user --name=venv-profiling
     ```
 
-## pgSTAC
+## Step 2: Seed pgSTAC database with test data
 
 The `pgstac` directory contains scripts for generating test data for profiling pgSTAC.
 
-To regenerate the test STAC data:
+To regenerate the CMIP6 STAC metadata. **Note:** you may not need to do this if STAC json files already exist in the `pgstac` directory:
 
 ```bash
 cd pgstac
-python generate_cmip6_items.py
+python3.9 generate_cmip6_items.py
 ```
 
-1. Seed pgSTAC database with test data
+### Option 1: Seed a local pgSTAC database with test data
 
 ```bash
 cd pgstac
 docker-compose up database
 pypgstac load collections cmip6_stac_collection.json --dsn postgresql://username:password@localhost:5439/postgis --method upsert
 pypgstac load items cmip6_stac_items.ndjson --dsn postgresql://username:password@localhost:5439/postgis --method upsert
+```
+
+### Option 2: Seed a rempote pgSTAC database with test database
+
+A pgSTAC database is deployed via Github workflows using cdk-pgstac. Access to the database is restricted to certain IPs. If you're IP has been added to the database security group, you can run the following code to seed the database:
+
+```bash
+cd pgstac
+sh ./seed-db.sh
 ```
 
 ## titiler-xarray

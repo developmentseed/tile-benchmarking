@@ -1,5 +1,5 @@
 #!/bin/bash
-stack_name=arn:aws:cloudformation:us-west-2:444055461661:stack/eodc-dev-pgSTAC/c6e3b0d0-08a9-11ee-b80c-0ab2a5ac006f
+stack_name=eodc-dev-pgSTAC
 region=us-west-2
 pgstac_secret_id=$(
     aws cloudformation describe-stack-resources \
