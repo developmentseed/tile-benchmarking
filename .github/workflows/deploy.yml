@@ -1,11 +1,9 @@
-# Sample workflow to access AWS resources when workflow is tied to branch
-# The workflow Creates static website using aws s3
-name: AWS example workflow
+name: Deploy pgSTAC to AWS
 
 on:
   push:
     branches:
-      - feat/deploy-pgstac
+      - main
   # enable a workflow to be triggered manually
   workflow_dispatch:
     inputs:
