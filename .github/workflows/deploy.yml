@@ -5,7 +5,7 @@ name: AWS example workflow
 on:
   push:
     branches:
-      - ab/deploy-pgstac
+      - feat/deploy-pgstac
   # enable a workflow to be triggered manually
   workflow_dispatch:
     inputs:
