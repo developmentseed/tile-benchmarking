@@ -1,0 +1,16 @@
+fsspec==2023.5.0
+geojson-pydantic==0.6.2
+ipykernel==6.23.1
+kerchunk==0.1.2
+loguru==0.7.0
+morecantile==3.4.0
+Pillow==9.5.0
+psycopg==3.1.9
+psycopg-binary==3.1.9
+pypgstac==0.7.9
+pystac==1.7.3
+rio-tiler==4.1.11
+rioxarray==0.14.1
+s3fs==2023.5.0
+xarray==2023.5.0
+ujson==5.7.0
