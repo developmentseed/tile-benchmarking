@@ -39,7 +39,7 @@ export class PgStacInfra extends Stack {
       apiEnv: {
         NAME: `EODC STAC API (${stage})`,
         VERSION: version,
-        DESCRIPTION: "STAC API for the AWS ASDI system.",
+        DESCRIPTION: "STAC API for EODC Tile Benchmarking.",
       },
       vpc,
       db,
