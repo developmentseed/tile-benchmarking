@@ -1,10 +1,20 @@
-.venv
-venv*
-profiling/titiler-xarray/*.json
-__pycache__
-.pgdata
-.ipynb_checkpoints
-venv*
 .vscode
+
+# Javascript libraries and compiled files
+*.js
+*.js.map
+!jest.config.js
+*.d.ts
 node_modules
+
+# CDK asset staging directory
+.cdk.staging
 cdk.out
+
+# Ignore local pgSTAC database files
+.pgdata
+
+# Ignore python's local cache and environment files
+__pycache__
+.ipynb_checkpoints
+*venv*

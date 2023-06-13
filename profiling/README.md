@@ -2,6 +2,7 @@
 
 These scripts are used to generate test data and for profiling tiling code.
 
+<<<<<<< HEAD
 There are few different options for how to run the profiling code:
 
 1. Locally on your machine 
@@ -22,6 +23,9 @@ You can also seed data for either:
 The former, monthly ensembles, has publicly available COGs here: https://nex-gddp-cmip6-cog.s3.us-west-2.amazonaws.com/index.html#monthly/CMIP6_ensemble_median/, but the NetCDF files from which those COGs were generated are not available in a public bucket at this time. That is why you will see references to climatedashboard-data in the option for generating a kerchunk reference for monthly ensemble NetCDF files.
 
 ## Environment Setup
+=======
+## Step 1: Setup your environment
+>>>>>>> main
 
 Create a virtual environment and install dependencies.
 
@@ -39,24 +43,33 @@ Note: Some of the timings require custom versions of rio_tiler modules. So it is
     python3.9 -m ipykernel install --user --name=venv-profiling
     ```
 
-## pgSTAC
+## Step 2: Seed pgSTAC database with test data
 
 The `pgstac` directory contains scripts for generating test data for profiling pgSTAC.
 
-To regenerate the test STAC data:
+To regenerate the CMIP6 STAC metadata. **Note:** you may not need to do this if STAC json files already exist in the `pgstac` directory:
 
 ```bash
 cd pgstac
 python generate_cmip6_items.py <daily|monthly>
 ```
 
-1. Seed pgSTAC database with test data
+### Option 1: Seed a local pgSTAC database with test data
 
 If using the `remote` option, you will need to have an active AWS session for the same account as the `eodc-dev-pgSTAC` cloudformation stack (currently the SMCE VEDA account).
 
 ```bash
 cd pgstac
 ./seed-db.sh <daily|monthly> <local|remote>
+```
+
+### Option 2: Seed a rempote pgSTAC database with test database
+
+A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)). Access to the database is restricted to certain IPs. If your IP has been added to the database security group, you can run the following code to seed the database:
+
+```bash
+cd pgstac
+sh ./seed-db.sh
 ```
 
 ## titiler-xarray
