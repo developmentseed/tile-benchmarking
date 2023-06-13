@@ -76,4 +76,4 @@ def process_item(s3_file):
 
 # For each object, create an Item and add it to the Catalog
 with concurrent.futures.ThreadPoolExecutor() as executor:
-    futures = [executor.submit(process_item, obj) for obj in subset_files[0:100]]
+    futures = [executor.submit(process_item, obj) for obj in subset_files]

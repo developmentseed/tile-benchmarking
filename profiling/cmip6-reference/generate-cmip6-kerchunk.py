@@ -1,5 +1,6 @@
 from tempfile import TemporaryDirectory
 
+import boto3
 import fsspec
 import ujson
 import xarray as xr
@@ -16,8 +17,17 @@ parser.add_argument(
     choices=["daily", "monthly"],
     help="Specify the CMIP collection to use (daily or monthly)")
 
+parser.add_argument(
+    "local_or_remote",
+    default="local",
+    choices=["local", "remote"],
+    help="Specify if the kerchunk file should be stored on S3.")
+
 args = parser.parse_args()
 # -
+
+# TODO(aimee): Make creating the kerchunk reference optional,
+# since kerchunk files may have already been created and we just want to upload them.
 
 if args.temporal_resolution == "daily":
     print("Running kerchunk generation for daily CMIP6 data...")
@@ -100,4 +110,11 @@ fs = fsspec.filesystem(
 m = fs.get_mapper("")
 
 # Check the data
-xr.open_dataset(m, engine="zarr", backend_kwargs=dict(consolidated=False))
+ds = xr.open_dataset(m, engine="zarr", backend_kwargs=dict(consolidated=False))
+print(ds)
+
+bucket_name = 'nasa-eodc-data-store'
+if args.local_or_remote == 'remote':
+    s3 = boto3.client('s3')
+    response = s3.upload_file(output_fname, bucket_name, output_fname)
+    print(f"Response uploading {output_fname} to {bucket_name} was {response}.")
