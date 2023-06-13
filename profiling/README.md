@@ -36,8 +36,14 @@ python generate_cmip6_items.py
 ```bash
 cd pgstac
 docker-compose up database
-pypgstac load collections cmip6_stac_collection.json --dsn postgresql://username:password@localhost:5439/postgis --method upsert
-pypgstac load items cmip6_stac_items.ndjson --dsn postgresql://username:password@localhost:5439/postgis --method upsert
+
+## Daily
+pypgstac load collections cmip6_daily_stac_collection.json --dsn postgresql://username:password@localhost:5439/postgis --method upsert
+pypgstac load items CMIP6_daily_GISS-E2-1-G_TAS_stac_items.ndjson --dsn postgresql://username:password@localhost:5439/postgis --method upsert
+
+## Monthly
+pypgstac load collections cmip6_monthly_stac_collection.json --dsn postgresql://username:password@localhost:5439/postgis --method upsert
+pypgstac load items CMIP6_ensemble_monthly_median_TAS_stac_items.ndjson --dsn postgresql://username:password@localhost:5439/postgis --method upsert
 ```
 
 ## titiler-xarray

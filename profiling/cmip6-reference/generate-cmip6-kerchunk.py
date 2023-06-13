@@ -5,30 +5,48 @@ import ujson
 import xarray as xr
 from kerchunk.combine import MultiZarrToZarr
 from kerchunk.hdf import SingleHdf5ToZarr
+from typing import Dict
+
+import argparse
+
+# +
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "temporal_resolution",
+    choices=["daily", "monthly"],
+    help="Specify the CMIP collection to use (daily or monthly)")
+
+args = parser.parse_args()
+# -
+
+if args.temporal_resolution == "daily":
+    print("Running kerchunk generation for daily CMIP6 data...")
+    temporal_resolution = "daily"
+    anon = True
+    s3_path = "s3://nex-gddp-cmip6/NEX-GDDP-CMIP6/GISS-E2-1-G/historical/r1i1p1f2/tas/"
+    # Your code for daily frequency goes here
+elif args.temporal_resolution == "monthly":
+    print("Running kerchunk generation for monthly CMIP6 data...")
+    temporal_resolution = "monthly"
+    anon = False
+    s3_path = "s3://climatedashboard-data/cmip6/raw/monthly/CMIP6_ensemble_median/tas/"
+
 
 # Initiate fsspec filesystems for reading and writing
-fs_read = fsspec.filesystem("s3", anon=False, skip_instance_cache=False)
+fs_read = fsspec.filesystem("s3", anon=anon, skip_instance_cache=False)
 fs_write = fsspec.filesystem("")
 
 # Retrieve list of available months
-files_paths = fs_read.glob("s3://climatedashboard-data/cmip6/raw/monthly/CMIP6_ensemble_median/tas/*")
+files_paths = fs_read.glob(s3_path)
 
 # Here we prepend the prefix 's3://', which points to AWS.
-subset_files = sorted(["s3://" + f for f in files_paths if ('month_ensemble-median' in f and ("1950" in f or "1951" in f))])
+if temporal_resolution == "monthly":
+    subset_files = sorted(["s3://" + f for f in files_paths if ('month_ensemble-median' in f and ("1950" in f or "1951" in f))])
+elif temporal_resolution == "daily":
+    subset_files = sorted(["s3://" + f for f in files_paths if "1950.nc" in f or "1951.nc" in f])
 
 print(f"{len(subset_files)} file paths were retrieved.")
 subset_files
-
-public_netcdf = 's3://nex-gddp-cmip6/NEX-GDDP-CMIP6/ACCESS-CM2/historical/r1i1p1f1/tas/tas_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc'
-ds = xr.open_dataset(fs_read.open(public_netcdf))
-ds
-
-ds = xr.open_dataset(fs_read.open(subset_files[0]))
-ds
-# Model: ACCESS-CM2
-# bias correction/spatial disaggregation (BCSD) method
-
-
 
 so = dict(mode="rb", anon=True, default_fill_cache=False, default_cache_type="first")
 output_dir = "./"
@@ -42,6 +60,7 @@ print(f"Writing single file references to {temp_dir}")
 # Use Kerchunk's `SingleHdf5ToZarr` method to create a `Kerchunk` index from a NetCDF file.
 def generate_json_reference(u, temp_dir: str):
     with fs_read.open(u, **so) as infile:
+        print(u)
         h5chunks = SingleHdf5ToZarr(infile, u, inline_threshold=300)
         fname = u.split("/")[-1].strip(".nc")
         outf = f"{fname}.json"
@@ -60,7 +79,7 @@ for single_file in subset_files:
 mzz = MultiZarrToZarr(
     output_files,
     remote_protocol='s3',
-    remote_options={'anon': False},
+    remote_options={'anon': anon},
     concat_dims=['time'],
     coo_map={"time": "cf:time"},
     inline_threshold=0
@@ -69,18 +88,16 @@ mzz = MultiZarrToZarr(
 multi_kerchunk = mzz.translate()
 
 # Write kerchunk .json record
-output_fname = "combined_cmip6_kerchunk.json"
+output_fname = f"combined_{temporal_resolution}_cmip6_kerchunk.json"
 with open(f"{output_fname}", "wb") as f:
     print(f"Writing combined kerchunk reference file {output_fname}")
     f.write(ujson.dumps(multi_kerchunk).encode())
 
 # open dataset as zarr object using fsspec reference file system and Xarray
 fs = fsspec.filesystem(
-    "reference", fo=multi_kerchunk, remote_protocol="s3", remote_options={"anon": False}
+    "reference", fo=multi_kerchunk, remote_protocol="s3", remote_options={"anon": anon}
 )
 m = fs.get_mapper("")
-ds = xr.open_dataset(m, engine="zarr", backend_kwargs=dict(consolidated=False))
-print(ds)
 
-# # Plot a slice of the dataset
-# ds.isel(time=0).tas.plot()
+# Check the data
+xr.open_dataset(m, engine="zarr", backend_kwargs=dict(consolidated=False))
