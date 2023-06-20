@@ -43,29 +43,28 @@ python -m ipykernel install --user --name=venv-profiling
 
 The `pgstac` directory contains scripts for generating test data for profiling pgSTAC.
 
-To regenerate the CMIP6 STAC metadata. **Note:** you may not need to do this if STAC json files already exist in the `pgstac` directory:
+### Step 1 Part 1: Static JSON files
+
+The first step is to generate static json files which will be subsequently used by pypgstac to load as rows into the pgSTAC database.
+
+**Note:** You may not need to run `generate_cmip6_items.py` if STAC json files already exist in the `pgstac` directory.
+
+To generate the CMIP6 STAC metadata json files:
 
 ```bash
 cd pgstac
 python generate_cmip6_items.py <daily|monthly>
 ```
 
-### Storage Option 1: Seed a local pgSTAC database with test data
+### Step 1 Part 2: Seed a local or remote pgSTAC database with test data
 
-If using the `remote` option, you will need to have an active AWS session for the same account as the `eodc-dev-pgSTAC` cloudformation stack (currently the SMCE VEDA account).
+A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)).
+
+If using the `remote` option, you will need to have an active AWS session for the same account as the `eodc-dev-pgSTAC` cloudformation stack (currently the SMCE VEDA account) and configured IP based access to the database. If your IP has been added to the database security group and you have an active AWS session with access, you can run the following code to seed the database:
 
 ```bash
 cd pgstac
 ./seed-db.sh <daily|monthly> <local|remote>
-```
-
-### Storage Option 2: Seed a rempote pgSTAC database with test database
-
-A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)). Access to the database is restricted to certain IPs. If your IP has been added to the database security group, you can run the following code to seed the database:
-
-```bash
-cd pgstac
-sh ./seed-db.sh
 ```
 
 ## Step 3: Generate kerchunk reference for use with `titiler-xarray`
