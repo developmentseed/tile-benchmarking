@@ -113,7 +113,7 @@ def mosaic_reader(
         assets_used,
     )
 
-if os.environ.get('LOCAL') == True:
+if os.environ.get('LOCAL') == 'True':
     pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis")
 else:
     # Fetch username, password, protocol and database from secrets
@@ -121,7 +121,13 @@ else:
     aws_region = os.environ.get('AWS_REGION', 'us-west-2')
     if stack_name == None:
         raise Exception("Please set a stack name in order to set database credentials from secrets manager")
-    cf_client = boto3.client('cloudformation', region_name=aws_region)
+    cf_client = boto3.client(
+        'cloudformation',
+        region_name=aws_region,
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        aws_session_token=os.environ['AWS_SESSION_TOKEN']        
+    )
     response = cf_client.describe_stack_resources(StackName=stack_name)
 
     # Extract the resources from the response
@@ -132,14 +138,20 @@ else:
         if 'pgstacdbbootstrappgstacinstancesecret'  in resource['LogicalResourceId']:
             physical_resource_id = resource['PhysicalResourceId']
             break
-    secrets_client = boto3.client('secretsmanager', region_name=aws_region)
+    secrets_client = boto3.client(
+        'secretsmanager',
+        region_name=aws_region,
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        aws_session_token=os.environ['AWS_SESSION_TOKEN']        
+    )
     response = secrets_client.get_secret_value(SecretId=physical_resource_id)
     secret_value = response['SecretString']
     secret_dict = json.loads(secret_value)
     username, password = secret_dict['username'], secret_dict['password']
     host, dbname, port = secret_dict['host'], secret_dict['dbname'], secret_dict['port']
     pool = ConnectionPool(conninfo=f"postgresql://{username}:{password}@{host}:{port}/{dbname}")
-    print(pool)
+    print("Connected to database")
 
 """Create map tile."""
 

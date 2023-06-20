@@ -88,12 +88,12 @@ You can run profiling notebook locally:
 jupyter notebook 
 ```
 
-Or you can run profiling notebook on a cloud-hosted jupyterhub instance. The VEDA Program includes a [2i2c JuupyterHub](https://nasa-veda.2i2c.cloud/).
+Or you can run profiling notebook on a cloud-hosted jupyterhub instance. The VEDA Program includes a [2i2c JuupyterHub](https://nasa-veda.2i2c.cloud/). Find documentation on how to request access [in the VEDA documentation on its JupyterHub](https://nasa-impact.github.io/veda-docs/services/jupyterhub.html).
 
 Once logged into a jupyterhub instance:
 
 ```bash
-https://github.com/developmentseed/tile-benchmarking.git
+git clone https://github.com/developmentseed/tile-benchmarking.git
 cd tile-benchmarking/
 ```
 
