@@ -30,13 +30,13 @@ Note: Some of the timings require custom versions of rio_tiler modules. So it is
 ```bash
 cd profiling
 # deactivate any existing virtual environment
-python3.9 -m venv venv-profiling
+python -m venv venv-profiling
 source venv-profiling/bin/activate
-python3.9 -m pip install -U pip
-python3.9 -m pip install -r requirements.txt
+python -m pip install -U pip
+python -m pip install -r requirements.txt
 # revert changes to rio_tiler
 git checkout profiling/venv-profiling/lib/python3.9/site-packages/rio_tiler/
-python3.9 -m ipykernel install --user --name=venv-profiling
+python -m ipykernel install --user --name=venv-profiling
 ```
 
 ## Step 1: Seed pgSTAC database with test data
