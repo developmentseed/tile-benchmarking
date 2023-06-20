@@ -71,7 +71,6 @@ print(f"Writing single file references to {temp_dir}")
 # Use Kerchunk's `SingleHdf5ToZarr` method to create a `Kerchunk` index from a NetCDF file.
 def generate_json_reference(u, temp_dir: str):
     with fs_read.open(u, **so) as infile:
-        print(u)
         h5chunks = SingleHdf5ToZarr(infile, u, inline_threshold=300)
         fname = u.split("/")[-1].strip(".nc")
         outf = f"{fname}.json"
