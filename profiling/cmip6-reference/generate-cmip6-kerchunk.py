@@ -48,6 +48,7 @@ fs_write = fsspec.filesystem("")
 
 # Retrieve list of available months
 files_paths = fs_read.glob(s3_path)
+print(f"{len(files_paths)} discovered from {s3_path}")
 
 # Here we prepend the prefix 's3://', which points to AWS.
 if temporal_resolution == "monthly":
@@ -58,7 +59,7 @@ elif temporal_resolution == "daily":
 print(f"{len(subset_files)} file paths were retrieved.")
 subset_files
 
-so = dict(mode="rb", anon=True, default_fill_cache=False, default_cache_type="first")
+so = dict(mode="rb", anon=anon, default_fill_cache=False, default_cache_type="first")
 output_dir = "./"
 
 # We are creating a temporary directory to store the .json reference files

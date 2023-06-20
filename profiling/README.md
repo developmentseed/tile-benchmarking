@@ -21,7 +21,7 @@ You can also seed data for either:
 
 The former, monthly ensembles, has publicly available COGs here: https://nex-gddp-cmip6-cog.s3.us-west-2.amazonaws.com/index.html#monthly/CMIP6_ensemble_median/, but the NetCDF files from which those COGs were generated are not available in a public bucket at this time. That is why you will see references to climatedashboard-data in the option for generating a kerchunk reference for monthly ensemble NetCDF files.
 
-## Environment Setup
+## O. Environment Setup
 
 Create a virtual environment and install dependencies.
 
@@ -39,7 +39,7 @@ Note: Some of the timings require custom versions of rio_tiler modules. So it is
     python3.9 -m ipykernel install --user --name=venv-profiling
     ```
 
-## Step 2: Seed pgSTAC database with test data
+## Step 1: Seed pgSTAC database with test data
 
 The `pgstac` directory contains scripts for generating test data for profiling pgSTAC.
 
@@ -50,7 +50,7 @@ cd pgstac
 python generate_cmip6_items.py <daily|monthly>
 ```
 
-### Option 1: Seed a local pgSTAC database with test data
+### Storage Option 1: Seed a local pgSTAC database with test data
 
 If using the `remote` option, you will need to have an active AWS session for the same account as the `eodc-dev-pgSTAC` cloudformation stack (currently the SMCE VEDA account).
 
@@ -59,7 +59,7 @@ cd pgstac
 ./seed-db.sh <daily|monthly> <local|remote>
 ```
 
-### Option 2: Seed a rempote pgSTAC database with test database
+### Storage Option 2: Seed a rempote pgSTAC database with test database
 
 A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)). Access to the database is restricted to certain IPs. If your IP has been added to the database security group, you can run the following code to seed the database:
 
@@ -68,7 +68,7 @@ cd pgstac
 sh ./seed-db.sh
 ```
 
-## titiler-xarray
+## Step 3: Generate kerchunk reference for use with `titiler-xarray`
 
 The `cmip6-reference` directory contains the `generate-cmip6-kerchunk.py` script for generating kerchunk reference files for profiling titiler-xarray.
 
@@ -76,12 +76,27 @@ If using the `remote` option, you will need to have an active AWS session for th
 
 ```bash
 cd cmip6-reference
-python generate-cmip6-reference.py <daily|monthly> <local|remote>
+python generate-cmip6-kerchunk.py <daily|monthly> <local|remote>
 ```
 
-## Profiling
+## Step 4: Profiling
+
+You can run profiling notebook locally:
 
 ```bash
 # open profiling/profile.ipynb and select the venv-profiling kernel
 jupyter notebook 
 ```
+
+Or you can run profiling notebook on a cloud-hosted jupyterhub instance. The VEDA Program includes a [2i2c JuupyterHub](https://nasa-veda.2i2c.cloud/).
+
+Once logged into a jupyterhub instance:
+
+```bash
+https://github.com/developmentseed/tile-benchmarking.git
+cd tile-benchmarking/
+```
+
+Depending on the jupyterhub instance, you may need to install the libraries in requirements.txt.
+
+
