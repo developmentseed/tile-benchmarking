@@ -21,7 +21,7 @@ You can also seed data for either:
 
 The former, monthly ensembles, has publicly available COGs here: https://nex-gddp-cmip6-cog.s3.us-west-2.amazonaws.com/index.html#monthly/CMIP6_ensemble_median/, but the NetCDF files from which those COGs were generated are not available in a public bucket at this time. That is why you will see references to climatedashboard-data in the option for generating a kerchunk reference for monthly ensemble NetCDF files.
 
-## O. Environment Setup
+## 0. Environment Setup
 
 Create a virtual environment and install dependencies.
 
