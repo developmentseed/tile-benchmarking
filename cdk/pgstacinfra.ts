@@ -27,7 +27,7 @@ export class PgStacInfra extends Stack {
       allocatedStorage: 1024,
       publiclyAccessible: true,
       pgstacVersion: '0.7.6',
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4, ec2.InstanceSize.SMALL)
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL)
     });
 
     const apiSubnetSelection: ec2.SubnetSelection = {
