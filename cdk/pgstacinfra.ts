@@ -50,6 +50,13 @@ export class PgStacInfra extends Stack {
         resources: [stackArn],
       })
     );
+    eodcHubRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['s3:*'],
+        resources: ['*'],
+      })
+    );
 
     const apiSubnetSelection: ec2.SubnetSelection = {
       subnetType: props.dbSubnetPublic
