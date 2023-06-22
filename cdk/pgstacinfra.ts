@@ -40,6 +40,17 @@ export class PgStacInfra extends Stack {
     // Grant permission to access the secret
     pgstacSecret.grantRead(eodcHubRole);
 
+    const stackName = this.stackName;
+    const stackArn = `arn:aws:cloudformation:${this.region}:${this.account}:stack/${stackName}/*`;
+
+    eodcHubRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['cloudformation:*'],
+        resources: [stackArn],
+      })
+    );
+
     const apiSubnetSelection: ec2.SubnetSelection = {
       subnetType: props.dbSubnetPublic
         ? ec2.SubnetType.PUBLIC
