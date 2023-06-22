@@ -3,6 +3,7 @@ import {
   StackProps,
   aws_ec2 as ec2,
   aws_rds as rds,
+  aws_iam as iam
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
@@ -29,6 +30,15 @@ export class PgStacInfra extends Stack {
       pgstacVersion: '0.7.6',
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL)
     });
+
+    // Create the IAM role
+    const eodcHubRole = new iam.Role(this, 'eodcHubRole', {
+      roleName: 'eodc-hub-role',
+      assumedBy: new iam.ArnPrincipal(`arn:aws:iam::${this.account}:role/nasa-veda-prod`),
+    });
+
+    // Grant permission to access the secret
+    pgstacSecret.grantRead(eodcHubRole);
 
     const apiSubnetSelection: ec2.SubnetSelection = {
       subnetType: props.dbSubnetPublic
