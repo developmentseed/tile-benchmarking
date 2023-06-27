@@ -50,6 +50,7 @@ export class PgStacInfra extends Stack {
         resources: [stackArn],
       })
     );
+
     eodcHubRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
