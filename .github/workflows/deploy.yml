@@ -3,6 +3,7 @@ name: Deploy pgSTAC to AWS
 on:
   push:
     branches:
+      - feat/add-access-to-veda-jhub
       - main
   # enable a workflow to be triggered manually
   workflow_dispatch:
@@ -19,6 +20,7 @@ permissions:
       contents: read    # This is required for actions/checkout
 jobs:
   deploy-pgstac:
+    environment: dev
     runs-on: ubuntu-latest
     steps:
       - name: Git clone the repository

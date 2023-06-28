@@ -3,7 +3,7 @@ import {
   StackProps,
   aws_ec2 as ec2,
   aws_rds as rds,
-  aws_iam as iam
+  aws_iam as iam,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
@@ -58,6 +58,18 @@ export class PgStacInfra extends Stack {
         resources: ['*'],
       })
     );
+
+    const describeSecurityGroupsStatement = new iam.PolicyStatement({
+      actions: ['ec2:DescribeSecurityGroups'],
+      resources: ['*'],
+    });
+    eodcHubRole.addToPolicy(describeSecurityGroupsStatement);
+    const securityGroupStatement = new iam.PolicyStatement({
+      actions: ['ec2:ModifySecurityGroup*', 'ec2:AuthorizeSecurityGroupIngress'],
+      // HACK: I can't figure out a way to programmatically get the security group id from the RDS CDK instance.
+      resources: [`arn:aws:ec2:${this.region}:${this.account}:security-group/${process.env['PGSTAC_SECURITY_GROUP_ID']}`],
+    });
+    eodcHubRole.addToPolicy(securityGroupStatement);
 
     const apiSubnetSelection: ec2.SubnetSelection = {
       subnetType: props.dbSubnetPublic
