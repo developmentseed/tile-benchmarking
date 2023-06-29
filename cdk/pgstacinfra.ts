@@ -3,7 +3,8 @@ import {
   StackProps,
   aws_ec2 as ec2,
   aws_rds as rds,
-  aws_iam as iam,
+  aws_secretsmanager as secretsmanager,
+  CfnOutput
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
@@ -12,6 +13,7 @@ import {
 } from "cdk-pgstac";
 
 export class PgStacInfra extends Stack {
+  pgstacSecret: secretsmanager.ISecret;
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
 
@@ -30,46 +32,17 @@ export class PgStacInfra extends Stack {
       pgstacVersion: '0.7.6',
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL)
     });
-
-    // Create the IAM role
-    const eodcHubRole = new iam.Role(this, 'eodcHubRole', {
-      roleName: 'eodc-hub-role',
-      assumedBy: new iam.ArnPrincipal(`arn:aws:iam::${this.account}:role/nasa-veda-prod`),
-    });
-
-    // Grant permission to access the secret
-    pgstacSecret.grantRead(eodcHubRole);
-
+    this.pgstacSecret = pgstacSecret;
     const stackName = this.stackName;
     const stackArn = `arn:aws:cloudformation:${this.region}:${this.account}:stack/${stackName}/*`;
-
-    eodcHubRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['cloudformation:*'],
-        resources: [stackArn],
-      })
-    );
-
-    eodcHubRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['s3:*'],
-        resources: ['*'],
-      })
-    );
-
-    const describeSecurityGroupsStatement = new iam.PolicyStatement({
-      actions: ['ec2:DescribeSecurityGroups'],
-      resources: ['*'],
+    new CfnOutput(this, 'pgstacinfra-stackArn', {
+      value: stackArn,
+      exportName: `${this.stackName}-stackArn`
     });
-    eodcHubRole.addToPolicy(describeSecurityGroupsStatement);
-    const securityGroupStatement = new iam.PolicyStatement({
-      actions: ['ec2:ModifySecurityGroup*', 'ec2:AuthorizeSecurityGroupIngress'],
-      // HACK: I can't figure out a way to programmatically get the security group id from the RDS CDK instance.
-      resources: [`arn:aws:ec2:${this.region}:${this.account}:security-group/${process.env['PGSTAC_SECURITY_GROUP_ID']}`],
+    new CfnOutput(this, 'pgstacinfra-securityGroupId', {
+      value: this.resolve(db.connections.securityGroups[0].securityGroupId),
+      exportName: `${this.stackName}-securityGroupId`
     });
-    eodcHubRole.addToPolicy(securityGroupStatement);
 
     const apiSubnetSelection: ec2.SubnetSelection = {
       subnetType: props.dbSubnetPublic
