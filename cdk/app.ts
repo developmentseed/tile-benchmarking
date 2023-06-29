@@ -63,7 +63,7 @@ export class eodcHubRole extends cdk.Stack {
     });
     eodcHubRole.addToPolicy(describeSecurityGroupsStatement);
     const securityGroupStatement = new cdk.aws_iam.PolicyStatement({
-      actions: ['ec2:ModifySecurityGroup*', 'ec2:AuthorizeSecurityGroupIngress', 'RevokeSecurityGroupIngress'],
+      actions: ['ec2:ModifySecurityGroup*', 'ec2:AuthorizeSecurityGroupIngress'],
       resources: [`arn:aws:ec2:${this.region}:${this.account}:security-group/${securityGroupId}`],
     });
     eodcHubRole.addToPolicy(securityGroupStatement);

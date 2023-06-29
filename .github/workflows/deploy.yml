@@ -3,7 +3,6 @@ name: Deploy pgSTAC to AWS
 on:
   push:
     branches:
-      - feat/add-access-to-veda-jhub
       - main
   # enable a workflow to be triggered manually
   workflow_dispatch:
