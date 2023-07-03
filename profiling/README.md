@@ -44,8 +44,8 @@ python -m ipykernel install --user --name=venv-profiling
 ```bash
 export temporal_resolution=daily
 export storage_location=remote
-export model=GISS-E2-1-G
-export variable=tas
+export model=ACCESS-CM2
+export variable=tasmax
 ```
 
 ## Step 1: Seed pgSTAC database with test data
@@ -81,7 +81,10 @@ papermill cmip6-reference/generate-cmip6-kerchunk.ipynb - \
 This took about 9 minutes and 18 seconds on my macbook pro (2.6 GHz 6-Core Intel Core i7, 16 GB memory).
 
 ```bash
-papermill cmip6-zarr/generate-cmip6-zarr.ipynb - --log-level DEBUG
+time \
+papermill cmip6-zarr/generate-cmip6-zarr.ipynb - \
+-p temporal_resolution $temporal_resolution -p storage_location $storage_location \
+-p model $model -p variable $variable --log-level DEBUG
 ```
 
 ## Step 4: Profiling
