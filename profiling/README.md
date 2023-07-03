@@ -42,10 +42,10 @@ python -m ipykernel install --user --name=venv-profiling
 ## Set default variables
 
 ```bash
-export temporal_resolution=daily
+export temporal_resolution=monthly
 export storage_location=remote
-export model=ACCESS-CM2
-export variable=tasmax
+export model=GISS-E2-1-G
+export variable=tas
 ```
 
 ## Step 1: Seed pgSTAC database with test data
