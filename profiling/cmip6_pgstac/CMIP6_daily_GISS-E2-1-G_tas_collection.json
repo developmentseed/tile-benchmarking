@@ -1,5 +1,5 @@
 {
-    "id": "CMIP6_daily_GISS-E2-1-G_TAS",
+    "id": "CMIP6_daily_GISS-E2-1-G_tas",
     "stac_version": "1.0.0",
     "license": "not-provided",
     "title": "CMIP6 Daily Near-Surface Air Temperature from GISS-E2-1-G Model",

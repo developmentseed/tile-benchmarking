@@ -52,10 +52,10 @@ elif temporal_resolution == "daily":
 print(f"Subseted data to files for 1950 and 1951. {len(subset_files)} files to process.")
 
 # Create the collection
-collection_json = json.loads(open(f'cmip6_{temporal_resolution}_stac_collection.json').read())
+collection_json = json.loads(open(f'cmip6_pgstac/cmip6_{temporal_resolution}_stac_collection.json').read())
 collection = Collection.from_dict(collection_json)
 
-stac_items_file = f'{collection.id}_stac_items.ndjson'
+stac_items_file = f'cmip6_pgstac/{collection.id}_stac_items.ndjson'
 # clear the file
 with open(stac_items_file, 'w') as file:
     pass
