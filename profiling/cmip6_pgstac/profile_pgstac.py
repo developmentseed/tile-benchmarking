@@ -126,7 +126,7 @@ else:
         region_name=aws_region,
         aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
         aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-        aws_session_token=os.environ['AWS_SESSION_TOKEN']        
+        aws_session_token=os.environ['AWS_SESSION_TOKEN']
     )
     response = cf_client.describe_stack_resources(StackName=stack_name)
 
@@ -143,7 +143,7 @@ else:
         region_name=aws_region,
         aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
         aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-        aws_session_token=os.environ['AWS_SESSION_TOKEN']        
+        aws_session_token=os.environ['AWS_SESSION_TOKEN']
     )
     response = secrets_client.get_secret_value(SecretId=physical_resource_id)
     secret_value = response['SecretString']
