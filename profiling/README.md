@@ -39,6 +39,15 @@ git checkout profiling/venv-profiling/lib/python3.9/site-packages/rio_tiler/
 python -m ipykernel install --user --name=venv-profiling
 ```
 
+## Set default variables
+
+```bash
+export temporal_resolution=daily
+export storage_location=remote
+export model=GISS-E2-1-G
+export variable=tas
+```
+
 ## Step 1: Seed pgSTAC database with test data
 
 The `cmip6_pgstac` directory contains scripts for generating test data for profiling pgSTAC.
@@ -48,7 +57,10 @@ The `generate_cmip6_items.ipynb` generates static json files which will be subse
 **If using the `remote` option:** A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)). If using the `remote` option, you will need to have an active AWS session for the same account as the `eodc-dev-pgSTAC` cloudformation stack (currently the SMCE VEDA account) and configured IP based access to the database. If your IP has been added to the database security group and you have an active AWS session with access, you can run the following code to seed the database:
 
 ```bash
-papermill cmip6_pgstac/generate_cmip6_items.ipynb - --log-level DEBUG
+time \
+papermill cmip6_pgstac/generate_cmip6_items.ipynb - \
+-p temporal_resolution $temporal_resolution -p storage_location $storage_location \
+-p model $model -p variable $variable --log-level DEBUG
 ```
 
 ## Step 3: Generate kerchunk reference for use with `titiler-xarray`
@@ -58,7 +70,10 @@ The `cmip6-reference` directory contains the `generate-cmip6-kerchunk.ipynb,py` 
 If using the `remote` option, you will need to have an active AWS session for the same account as the `nasa-eodc-data-store` s3 bucket (currently the SMCE VEDA account).
 
 ```bash
-papermill cmip6-reference/generate-cmip6-kerchunk.ipynb - --log-level DEBUG
+time \
+papermill cmip6-reference/generate-cmip6-kerchunk.ipynb - \
+-p temporal_resolution $temporal_resolution -p storage_location $storage_location \
+-p model $model -p variable $variable --log-level DEBUG
 ```
 
 ## Step 4: Generate Zarr store and store on S3
