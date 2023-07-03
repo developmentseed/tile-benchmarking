@@ -18,3 +18,4 @@ cdk.out
 __pycache__
 .ipynb_checkpoints
 *venv*
+cdk.context.json

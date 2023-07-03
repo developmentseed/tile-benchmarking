@@ -78,6 +78,13 @@ cd cmip6-reference
 python generate-cmip6-kerchunk.py <daily|monthly> <local|remote>
 ```
 
+## Step 4: Generate Zarr store and store on S3
+
+```bash
+cd cmip6-zarr
+python generate-cmip6-zarr.py
+```
+
 ## Step 4: Profiling
 
 You can run profiling notebook locally:
