@@ -3,6 +3,8 @@ import {
   StackProps,
   aws_ec2 as ec2,
   aws_rds as rds,
+  aws_secretsmanager as secretsmanager,
+  CfnOutput
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
@@ -11,6 +13,7 @@ import {
 } from "cdk-pgstac";
 
 export class PgStacInfra extends Stack {
+  pgstacSecret: secretsmanager.ISecret;
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
 
@@ -28,6 +31,17 @@ export class PgStacInfra extends Stack {
       publiclyAccessible: true,
       pgstacVersion: '0.7.6',
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL)
+    });
+    this.pgstacSecret = pgstacSecret;
+    const stackName = this.stackName;
+    const stackArn = `arn:aws:cloudformation:${this.region}:${this.account}:stack/${stackName}/*`;
+    new CfnOutput(this, 'pgstacinfra-stackArn', {
+      value: stackArn,
+      exportName: `${this.stackName}-stackArn`
+    });
+    new CfnOutput(this, 'pgstacinfra-securityGroupId', {
+      value: this.resolve(db.connections.securityGroups[0].securityGroupId),
+      exportName: `${this.stackName}-securityGroupId`
     });
 
     const apiSubnetSelection: ec2.SubnetSelection = {
