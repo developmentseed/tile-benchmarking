@@ -1,7 +1,10 @@
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Optional
 
-import morecantile
+import boto3
 from geojson_pydantic import Polygon
+import json
+import morecantile
+import os
 from profiler.main import Timer, profile
 from psycopg.rows import class_row
 from psycopg_pool import ConnectionPool
@@ -110,8 +113,45 @@ def mosaic_reader(
         assets_used,
     )
 
+if os.environ.get('LOCAL') == 'True':
+    pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis")
+else:
+    # Fetch username, password, protocol and database from secrets
+    stack_name = os.environ.get('STACK_NAME', None)
+    aws_region = os.environ.get('AWS_REGION', 'us-west-2')
+    if stack_name == None:
+        raise Exception("Please set a stack name in order to set database credentials from secrets manager")
+    cf_client = boto3.client(
+        'cloudformation',
+        region_name=aws_region,
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        aws_session_token=os.environ['AWS_SESSION_TOKEN']
+    )
+    response = cf_client.describe_stack_resources(StackName=stack_name)
 
-pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis")
+    # Extract the resources from the response
+    resources = response['StackResources']
+
+    # Print the details of each resource
+    for resource in resources:
+        if 'pgstacdbbootstrappgstacinstancesecret'  in resource['LogicalResourceId']:
+            physical_resource_id = resource['PhysicalResourceId']
+            break
+    secrets_client = boto3.client(
+        'secretsmanager',
+        region_name=aws_region,
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        aws_session_token=os.environ['AWS_SESSION_TOKEN']
+    )
+    response = secrets_client.get_secret_value(SecretId=physical_resource_id)
+    secret_value = response['SecretString']
+    secret_dict = json.loads(secret_value)
+    username, password = secret_dict['username'], secret_dict['password']
+    host, dbname, port = secret_dict['host'], secret_dict['dbname'], secret_dict['port']
+    pool = ConnectionPool(conninfo=f"postgresql://{username}:{password}@{host}:{port}/{dbname}")
+    print("Connected to database")
 
 """Create map tile."""
 

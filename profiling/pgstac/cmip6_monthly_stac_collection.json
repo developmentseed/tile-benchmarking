@@ -1,10 +1,10 @@
 {
-    "id": "CMIP6_ensemble_median_TAS",
+    "id": "CMIP6_ensemble_monthly_median_TAS",
     "stac_version": "1.0.0",
     "license": "not-provided",
-    "title": "CMIP6 Ensemble Median of Near-Surface Air Temperature",
+    "title": "CMIP6 Ensemble Monthly Median of Near-Surface Air Temperature",
     "type": "Collection",
-    "description": "CMIP6 Ensemble Median of Near-Surface Air Temperature",
+    "description": "CMIP6 Ensemble Monthly Median of Near-Surface Air Temperature",
     "links":[],
     "extent": {
         "spatial": {
