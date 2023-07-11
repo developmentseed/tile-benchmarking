@@ -39,43 +39,52 @@ git checkout profiling/venv-profiling/lib/python3.9/site-packages/rio_tiler/
 python -m ipykernel install --user --name=venv-profiling
 ```
 
-## Step 1: Seed pgSTAC database with test data
-
-The `pgstac` directory contains scripts for generating test data for profiling pgSTAC.
-
-### Step 1 Part 1: Static JSON files
-
-The first step is to generate static json files which will be subsequently used by pypgstac to load as rows into the pgSTAC database.
-
-**Note:** You may not need to run `generate_cmip6_items.py` if STAC json files already exist in the `pgstac` directory.
-
-To generate the CMIP6 STAC metadata json files:
+## Set default variables
 
 ```bash
-cd pgstac
-python generate_cmip6_items.py <daily|monthly>
+export temporal_resolution=monthly
+export storage_location=remote
+export model=GISS-E2-1-G
+export variable=tas
 ```
 
-### Step 1 Part 2: Seed a local or remote pgSTAC database with test data
+## Step 1: Seed pgSTAC database with test data
 
-A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)).
+The `cmip6_pgstac` directory contains scripts for generating test data for profiling pgSTAC.
 
-If using the `remote` option, you will need to have an active AWS session for the same account as the `eodc-dev-pgSTAC` cloudformation stack (currently the SMCE VEDA account) and configured IP based access to the database. If your IP has been added to the database security group and you have an active AWS session with access, you can run the following code to seed the database:
+The `generate_cmip6_items.ipynb` generates static json files which will be subsequently used by pypgstac to load as rows into the pgSTAC database.
+
+**If using the `remote` option:** A pgSTAC database is deployed via Github workflows (see the `cdk/` directory and [.github/workflows/deploy.yml](../.github/workflows/deploy.yml)). If using the `remote` option, you will need to have an active AWS session for the same account as the `eodc-dev-pgSTAC` cloudformation stack (currently the SMCE VEDA account) and configured IP based access to the database. If your IP has been added to the database security group and you have an active AWS session with access, you can run the following code to seed the database:
 
 ```bash
-cd pgstac
-./seed-db.sh <daily|monthly> <local|remote>
+time \
+papermill cmip6_pgstac/generate_cmip6_items.ipynb - \
+-p temporal_resolution $temporal_resolution -p storage_location $storage_location \
+-p model $model -p variable $variable --log-level DEBUG
 ```
 
 ## Step 3: Generate kerchunk reference for use with `titiler-xarray`
 
-The `cmip6-reference` directory contains the `generate-cmip6-kerchunk.py` script for generating kerchunk reference files for profiling titiler-xarray.
+The `cmip6-reference` directory contains the `generate-cmip6-kerchunk.ipynb,py` scripts for generating kerchunk reference files for profiling titiler-xarray.
 
 If using the `remote` option, you will need to have an active AWS session for the same account as the `nasa-eodc-data-store` s3 bucket (currently the SMCE VEDA account).
 
 ```bash
-cd cmip6-reference
-python generate-cmip6-kerchunk.py <daily|monthly> <local|remote>
+time \
+papermill cmip6-reference/generate-cmip6-kerchunk.ipynb - \
+-p temporal_resolution $temporal_resolution -p storage_location $storage_location \
+-p model $model -p variable $variable --log-level DEBUG
+```
+
+## Step 4: Generate Zarr store and store on S3
+
+This took about 9 minutes and 18 seconds on my macbook pro (2.6 GHz 6-Core Intel Core i7, 16 GB memory).
+
+```bash
+time \
+papermill cmip6-zarr/generate-cmip6-zarr.ipynb - \
+-p temporal_resolution $temporal_resolution -p storage_location $storage_location \
+-p model $model -p variable $variable --log-level DEBUG
 ```
 
 ## Step 4: Profiling

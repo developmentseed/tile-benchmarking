@@ -1,3 +1,15 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: -all
+#     formats: ipynb,py
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.14.7
+# ---
+
 import boto3
 import fsspec
 import json
@@ -40,10 +52,10 @@ elif temporal_resolution == "daily":
 print(f"Subseted data to files for 1950 and 1951. {len(subset_files)} files to process.")
 
 # Create the collection
-collection_json = json.loads(open(f'cmip6_{temporal_resolution}_stac_collection.json').read())
+collection_json = json.loads(open(f'cmip6_pgstac/cmip6_{temporal_resolution}_stac_collection.json').read())
 collection = Collection.from_dict(collection_json)
 
-stac_items_file = f'{collection.id}_stac_items.ndjson'
+stac_items_file = f'cmip6_pgstac/{collection.id}_stac_items.ndjson'
 # clear the file
 with open(stac_items_file, 'w') as file:
     pass

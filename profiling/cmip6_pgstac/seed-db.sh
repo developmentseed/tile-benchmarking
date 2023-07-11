@@ -2,17 +2,19 @@
 
 temporal_resolution="$1"
 local_or_remote="$2"
+model="$3"
+variable="$4"
 
 # Specify json files based on temporal_resolution
 if [ -n "$temporal_resolution" ]; then
   if [ "$temporal_resolution" = "daily" ]; then
     echo "Daily data selected"
-    collection_json_file="cmip6_daily_stac_collection.json"
-    items_json_file="CMIP6_daily_GISS-E2-1-G_TAS_stac_items.ndjson"
+    collection_json_file="cmip6_pgstac/CMIP6_daily_${model}_${variable}_collection.json"
+    items_json_file="cmip6_pgstac/CMIP6_daily_${model}_${variable}_stac_items.ndjson"
   elif [ "$temporal_resolution" = "monthly" ]; then
     echo "Monthly data selected"
-    collection_json_file="cmip6_monthly_stac_collection.json"
-    items_json_file="CMIP6_ensemble_monthly_median_TAS_stac_items.ndjson" 
+    collection_json_file="cmip6_pgstac/cmip6_monthly_ensemble_stac_collection.json"
+    items_json_file="cmip6_pgstac/cmip6_monthly_ensemble_tas_stac_items.ndjson" 
   else
     # Handle other cases
     echo "Invalid temporal resolution option"
