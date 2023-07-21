@@ -16,13 +16,12 @@ def xarray_open_dataset(
     reference: Optional[bool] = False,
     anon: Optional[bool] = True,
     decode_times: Optional[bool] = True,
-) -> xarray.Dataset:
+):
     """Open dataset."""
     xr_open_args: Dict[str, Any] = {
-        "engine": "zarr",
         "decode_coords": "all",
         "decode_times": decode_times,
-        "consolidated": True,
+        "consolidated": True
     }
     if group:
         xr_open_args["group"] = group
@@ -34,12 +33,12 @@ def xarray_open_dataset(
             remote_options={"anon": anon},
         )
         src_path = fs.get_mapper("")
-        xr_open_args["backend_kwargs"] = {"consolidated": False}
+        xr_open_args["consolidated"] = False
 
     with Timer() as t:
-        ds = xarray.open_dataset(src_path, **xr_open_args)
-    print(f"Time elapsed for xarray.open_datset: {round(t.elapsed * 1000, 2)}")
-    return ds
+        ds = xarray.open_zarr(src_path, **xr_open_args)
+    time_to_open = round(t.elapsed * 1000, 2)
+    return ds, time_to_open
 
 
 def get_variable(

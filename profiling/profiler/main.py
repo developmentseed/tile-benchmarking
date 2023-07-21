@@ -5,6 +5,7 @@ import cProfile
 import json
 import logging
 import pstats
+import re
 import time
 from io import StringIO
 from typing import Callable
@@ -55,6 +56,23 @@ class Logger():
             print(log_lines)
         self.handler.close()  
 
+def cprofile_list_to_dict(cprofile_list):
+    result_dict = {}
+    for entry in cprofile_list:
+        parts = entry.strip().split("    ")
+        if len(parts) >= 5:
+            ncalls, tottime, percall, cumtime = map(float, parts[:4])
+            function = parts[4]
+            function_str = re.sub(r'^\d+\.\d+', '', function).strip()
+            entry_dict = {
+                "ncalls": ncalls,
+                "tottime": tottime,
+                "percall": percall,
+                "cumtime": cumtime,
+                "filename:lineno(function)": function_str,
+            }
+            result_dict[function_str] = entry_dict
+    return result_dict        
 
 def profile(
     add_to_return: bool = False,

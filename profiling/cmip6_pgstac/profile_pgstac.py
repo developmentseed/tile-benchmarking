@@ -9,6 +9,7 @@ from profiler.main import Timer, profile
 from psycopg.rows import class_row
 from psycopg_pool import ConnectionPool
 from rasterio.crs import CRS
+import requests
 from rio_tiler.constants import MAX_THREADS
 from rio_tiler.errors import EmptyMosaicError, TileOutsideBounds
 from rio_tiler.models import ImageData
@@ -136,8 +137,32 @@ else:
     # Print the details of each resource
     for resource in resources:
         if 'pgstacdbbootstrappgstacinstancesecret'  in resource['LogicalResourceId']:
-            physical_resource_id = resource['PhysicalResourceId']
-            break
+            secret_physical_resource_id = resource['PhysicalResourceId']
+        if 'pgstacdbSecurityGroup' in resource['LogicalResourceId'] and resource['PhysicalResourceId'].startswith('sg-'):
+            sg_physical_resource_id = resource['PhysicalResourceId']
+            
+            
+    # Add IP to security group inbound
+    public_ip = requests.get("http://checkip.amazonaws.com/").text.strip()
+    try:
+        ec2 = boto3.client(
+            'ec2',
+            region_name=aws_region,
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            aws_session_token=os.environ['AWS_SESSION_TOKEN']        
+        )
+        response = ec2.authorize_security_group_ingress(
+            GroupId=sg_physical_resource_id,
+            IpProtocol='tcp',
+            FromPort=5432,
+            ToPort=5432,
+            CidrIp=f"{public_ip}/32"  # Assuming the IP address is in CIDR notation (e.g., 192.168.1.1/32)
+        )
+        print("Inbound rule added successfully.")    
+    except Exception as e:
+        print("Caught exception: " + str(e))
+        
     secrets_client = boto3.client(
         'secretsmanager',
         region_name=aws_region,
@@ -145,7 +170,7 @@ else:
         aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
         aws_session_token=os.environ['AWS_SESSION_TOKEN']
     )
-    response = secrets_client.get_secret_value(SecretId=physical_resource_id)
+    response = secrets_client.get_secret_value(SecretId=secret_physical_resource_id)
     secret_value = response['SecretString']
     secret_dict = json.loads(secret_value)
     username, password = secret_dict['username'], secret_dict['password']

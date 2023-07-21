@@ -18,6 +18,8 @@ rio_stac==0.8.0
 rio-tiler==4.1.11
 rioxarray==0.14.1
 s3fs==2023.5.0
+titiler-pgstac
+titiler
 xarray==2023.5.0
 ujson==5.7.0
 apache-beam[interactive, dataframe]==2.48.0
