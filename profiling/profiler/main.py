@@ -65,8 +65,7 @@ def cprofile_list_to_dict(cprofile_list):
             # when it's a recursive call the bottom number is the 'primitive' or non-recursive calls.
             # The larger number is the total number of invocations. Debatable which should be included.
             parts[0] = parts[0].split("/")[0]
-            try:
-                ncalls, tottime, percall, cumtime = map(float, parts[:4])
+            ncalls, tottime, percall, cumtime = map(float, parts[:4])
             function = parts[4]
             function_str = re.sub(r'^\d+\.\d+', '', function).strip()
             entry_dict = {
