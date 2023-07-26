@@ -10,4 +10,8 @@ def fetch_and_set_credentials():
     response = sts_client.assume_role(RoleArn=f'arn:aws:iam::{account_id}:role/eodc-hub-role',
                                       RoleSessionName='tile-benchmarking')
     credentials = response['Credentials']
+    # set 
+    os.environ['AWS_ACCESS_KEY_ID'] = credentials['AccessKeyId']
+    os.environ['AWS_SECRET_ACCESS_KEY'] = credentials['SecretAccessKey']
+    os.environ['AWS_SESSION_TOKEN'] = credentials['SessionToken']  
     return credentials

@@ -97,7 +97,7 @@ def mosaic_reader(
                     assets_used,
                 )
 
-    data, mask = pixel_selection.data.data, pixel_selection.data.mask
+    data, mask = pixel_selection.data#.data, pixel_selection.data.mask
     if data is None:
         raise EmptyMosaicError("Method returned an empty array")
 
@@ -114,78 +114,83 @@ def mosaic_reader(
         assets_used,
     )
 
-if os.environ.get('LOCAL') == 'True':
-    pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis")
-else:
-    # Fetch username, password, protocol and database from secrets
-    stack_name = os.environ.get('STACK_NAME', None)
-    aws_region = os.environ.get('AWS_REGION', 'us-west-2')
-    if stack_name == None:
-        raise Exception("Please set a stack name in order to set database credentials from secrets manager")
-    cf_client = boto3.client(
-        'cloudformation',
-        region_name=aws_region,
-        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-        aws_session_token=os.environ['AWS_SESSION_TOKEN']
-    )
-    response = cf_client.describe_stack_resources(StackName=stack_name)
-
-    # Extract the resources from the response
-    resources = response['StackResources']
-
-    # Print the details of each resource
-    for resource in resources:
-        if 'pgstacdbbootstrappgstacinstancesecret'  in resource['LogicalResourceId']:
-            secret_physical_resource_id = resource['PhysicalResourceId']
-        if 'pgstacdbSecurityGroup' in resource['LogicalResourceId'] and resource['PhysicalResourceId'].startswith('sg-'):
-            sg_physical_resource_id = resource['PhysicalResourceId']
-            
-            
-    # Add IP to security group inbound
-    public_ip = requests.get("http://checkip.amazonaws.com/").text.strip()
-    try:
-        ec2 = boto3.client(
-            'ec2',
+def connect_to_database(aws_credentials):
+    # set environment variables for rasterio
+    if os.environ.get('LOCAL') == 'True':
+        pool = ConnectionPool(conninfo="postgresql://username:password@localhost:5439/postgis")
+    else:
+        # Fetch username, password, protocol and database from secrets
+        stack_name = os.environ.get('STACK_NAME', None)
+        aws_region = os.environ.get('AWS_REGION', 'us-west-2')
+        if stack_name == None:
+            raise Exception("Please set a stack name in order to set database credentials from secrets manager")
+        cf_client = boto3.client(
+            'cloudformation',
             region_name=aws_region,
-            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-            aws_session_token=os.environ['AWS_SESSION_TOKEN']        
+            aws_access_key_id=aws_credentials['AccessKeyId'],
+            aws_secret_access_key=aws_credentials['SecretAccessKey'],
+            aws_session_token=aws_credentials['SessionToken']
         )
-        response = ec2.authorize_security_group_ingress(
-            GroupId=sg_physical_resource_id,
-            IpProtocol='tcp',
-            FromPort=5432,
-            ToPort=5432,
-            CidrIp=f"{public_ip}/32"  # Assuming the IP address is in CIDR notation (e.g., 192.168.1.1/32)
+        response = cf_client.describe_stack_resources(StackName=stack_name)
+
+        # Extract the resources from the response
+        resources = response['StackResources']
+
+        # Print the details of each resource
+        for resource in resources:
+            if 'pgstacdbbootstrappgstacinstancesecret'  in resource['LogicalResourceId']:
+                secret_physical_resource_id = resource['PhysicalResourceId']
+            if 'pgstacdbSecurityGroup' in resource['LogicalResourceId'] and resource['PhysicalResourceId'].startswith('sg-'):
+                sg_physical_resource_id = resource['PhysicalResourceId']
+
+
+        # Add IP to security group inbound
+        public_ip = requests.get("http://checkip.amazonaws.com/").text.strip()
+        try:
+            ec2 = boto3.client(
+                'ec2',
+                region_name=aws_region,
+                aws_access_key_id=aws_credentials['AccessKeyId'],
+                aws_secret_access_key=aws_credentials['SecretAccessKey'],
+                aws_session_token=aws_credentials['SessionToken']        
+            )
+            response = ec2.authorize_security_group_ingress(
+                GroupId=sg_physical_resource_id,
+                IpProtocol='tcp',
+                FromPort=5432,
+                ToPort=5432,
+                CidrIp=f"{public_ip}/32"  # Assuming the IP address is in CIDR notation (e.g., 192.168.1.1/32)
+            )
+            print("Inbound rule added successfully.")    
+        except Exception as e:
+            print("Caught exception: " + str(e))
+
+        secrets_client = boto3.client(
+            'secretsmanager',
+            region_name=aws_region,
+            aws_access_key_id=aws_credentials['AccessKeyId'],
+            aws_secret_access_key=aws_credentials['SecretAccessKey'],
+            aws_session_token=aws_credentials['SessionToken']
         )
-        print("Inbound rule added successfully.")    
-    except Exception as e:
-        print("Caught exception: " + str(e))
-        
-    secrets_client = boto3.client(
-        'secretsmanager',
-        region_name=aws_region,
-        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-        aws_session_token=os.environ['AWS_SESSION_TOKEN']
-    )
-    response = secrets_client.get_secret_value(SecretId=secret_physical_resource_id)
-    secret_value = response['SecretString']
-    secret_dict = json.loads(secret_value)
-    username, password = secret_dict['username'], secret_dict['password']
-    host, dbname, port = secret_dict['host'], secret_dict['dbname'], secret_dict['port']
-    pool = ConnectionPool(conninfo=f"postgresql://{username}:{password}@{host}:{port}/{dbname}")
-    print("Connected to database")
+        response = secrets_client.get_secret_value(SecretId=secret_physical_resource_id)
+        secret_value = response['SecretString']
+        secret_dict = json.loads(secret_value)
+        username, password = secret_dict['username'], secret_dict['password']
+        host, dbname, port = secret_dict['host'], secret_dict['dbname'], secret_dict['port']
+        pool = ConnectionPool(conninfo=f"postgresql://{username}:{password}@{host}:{port}/{dbname}")
+        print("Connected to database")
+        return pool
 
 """Create map tile."""
 
 @profile(add_to_return=True, cprofile=True, quiet=True, log_library='rasterio')
 def tile(
+    pool: ConnectionPool,
     tile_x: int,
     tile_y: int,
     tile_z: int,
     query: Dict,
+    quiet: bool = True
 ) -> Tuple[ImageData, List[str]]:
     timings = {}
 
@@ -223,7 +228,6 @@ def tile(
     def _reader(
         item: Dict[str, Any], x: int, y: int, z: int, **kwargs: Any
     ) -> ImageData:
-        # GET TILE Timing
         with Timer() as t:
             with backend.reader(item, tms=backend.tms, **backend.reader_options) as src_dst:
                 img = src_dst.tile(x, y, z, **kwargs)
@@ -239,6 +243,7 @@ def tile(
         )
     timings["get_tile"] = img.metadata["get_tile_timings"]
     timings["mosaic"] = round(t.elapsed * 1000, 2)
-    print(timings)
+    if quiet != True:
+        print(timings)
 
     return img, assets

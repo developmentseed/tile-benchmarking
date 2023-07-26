@@ -53,7 +53,7 @@ class Logger():
         self.logger.removeHandler(self.handler)
         log_lines = self.log_stream.getvalue().splitlines()
         if not self.quiet:
-            print(log_lines)
+            [print(line) for line in log_lines]
         self.handler.close()  
 
 def cprofile_list_to_dict(cprofile_list):

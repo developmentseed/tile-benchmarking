@@ -97,11 +97,11 @@ class XarrayTileReader(XarrayReader):
 
         return image_data, timing_results
  
-@profile(add_to_return=True, cprofile=False, quiet=False, log_library='s3fs')
+@profile(add_to_return=True, cprofile=False, quiet=True, log_library='s3fs')
 def tile(src_path: str, x: int, y: int, z: int, *, variable: str, time_slice: str = None, **kwargs: Any):
     timing_results = {}
 
-    dataset_and_time = zarr_reader.xarray_open_dataset(src_path, group=z, decode_times=False, **kwargs)
+    dataset_and_time = zarr_reader.xarray_open_dataset(src_path, decode_times=False, **kwargs) # group=z
     dataset, time_to_open = dataset_and_time
     timing_results['time_to_open'] = time_to_open
 
