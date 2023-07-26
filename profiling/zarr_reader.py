@@ -17,13 +17,14 @@ def xarray_open_dataset(
     anon: Optional[bool] = True,
     decode_times: Optional[bool] = True,
 ):
+    print(f"Group is {group}")
     """Open dataset."""
     xr_open_args: Dict[str, Any] = {
         "decode_coords": "all",
         "decode_times": decode_times,
         "consolidated": True
     }
-    if group:
+    if type(group) == int:
         xr_open_args["group"] = group
 
     if reference:
@@ -48,11 +49,13 @@ def get_variable(
     drop_dim: Optional[str] = None,
 ) -> xarray.DataArray:
     """Get Xarray variable as DataArray."""
-    ds = ds.rename({"lat": "y", "lon": "x"})
+    try:
+        ds = ds.rename({"lat": "y", "lon": "x"})
+    except Exception as e:
+        print(f"Caught exception: {e}")
     if drop_dim:
         dim_to_drop, dim_val = drop_dim.split("=")
         ds = ds.sel({dim_to_drop: dim_val}).drop(dim_to_drop)
-
     da = ds[variable]
 
     if (da.x > 180).any():
