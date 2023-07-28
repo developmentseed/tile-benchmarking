@@ -9,19 +9,20 @@ import numpy
 import rioxarray
 import xarray
 from profiler.main import Timer
+from pyproj import CRS
+from zarr import errors as zarr_errors
 
 def xarray_open_dataset(
     src_path: str,
     multiscale: Optional[bool] = False,
     reference: Optional[bool] = False,
     anon: Optional[bool] = True,
-    decode_times: Optional[bool] = True,
+    decode_times: Optional[bool] = False,
     **kwargs: Any
 ):
-    print(f"Group is {group}")
     """Open dataset."""
     xr_open_args: Dict[str, Any] = {
-        "decode_coords": "all",
+        "decode_coords": False,
         "decode_times": decode_times,
         "consolidated": True
     }
@@ -38,8 +39,16 @@ def xarray_open_dataset(
         xr_open_args["consolidated"] = False
 
     with Timer() as t:
-        import pdb; pdb.set_trace()
-        ds = xarray.open_zarr(src_path, **xr_open_args)
+        try:
+            ds = xarray.open_zarr(src_path, **xr_open_args)
+        except zarr_errors.PathNotFoundError as e:
+            # Fallback to the max group
+            del xr_open_args['group']
+            multiscale_ds = xarray.open_zarr(src_path, **xr_open_args)
+            paths = [dataset['path'] for dataset in multiscale_ds.multiscales[0]['datasets']]
+            max_group = max(paths)
+            ds = xarray.open_zarr(src_path, **xr_open_args, group=max_group)        
+        
     time_to_open = round(t.elapsed * 1000, 2)
     return ds, time_to_open
 
@@ -51,25 +60,22 @@ def get_variable(
     drop_dim: Optional[str] = None,
 ) -> xarray.DataArray:
     """Get Xarray variable as DataArray."""
-    try:
+    if 'lat' and 'lon' in ds.dims:
         ds = ds.rename({"lat": "y", "lon": "x"})
-    except Exception as e:
-        print(f"Caught exception: {e}")
     if drop_dim:
         dim_to_drop, dim_val = drop_dim.split("=")
         ds = ds.sel({dim_to_drop: dim_val}).drop(dim_to_drop)
     da = ds[variable]
+    # Make sure we have a valid CRS
+    crs = da.rio.crs or "epsg:4326"
+    da.rio.write_crs(crs, inplace=True)
 
-    if (da.x > 180).any():
+    if da.rio.crs == CRS.from_epsg(4326) and (da.x > 180).any():
         # Adjust the longitude coordinates to the -180 to 180 range
         da = da.assign_coords(x=(da.x + 180) % 360 - 180)
 
         # Sort the dataset by the updated longitude coordinates
         da = da.sortby(da.x)
-
-    # Make sure we have a valid CRS
-    crs = da.rio.crs or "epsg:4326"
-    da.rio.write_crs(crs, inplace=True)
 
     # TODO - address this time_slice issue
     if "time" in da.dims:

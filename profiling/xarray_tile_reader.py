@@ -68,7 +68,6 @@ class XarrayTileReader(XarrayReader):
         timing_results['rio.clip_box'] = round(t.elapsed * 1000, 2)
         
         with Timer() as t:
-            #import pdb; pdb.set_trace()
             ds = ds.rio.reproject(
                 self.tms.rasterio_crs,
                 shape=(tilesize, tilesize),
@@ -100,8 +99,7 @@ class XarrayTileReader(XarrayReader):
 @profile(add_to_return=True, cprofile=False, quiet=True, log_library='s3fs')
 def tile(src_path: str, x: int, y: int, z: int, *, variable: str, time_slice: str = None, **kwargs: Any):
     timing_results = {}
-
-    dataset_and_time = zarr_reader.xarray_open_dataset(src_path, decode_times=False, **kwargs) # group=z
+    dataset_and_time = zarr_reader.xarray_open_dataset(src_path, decode_times=False, z=z, **kwargs)
     dataset, time_to_open = dataset_and_time
     timing_results['time_to_open'] = time_to_open
 
