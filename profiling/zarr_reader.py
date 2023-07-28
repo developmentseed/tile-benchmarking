@@ -12,10 +12,11 @@ from profiler.main import Timer
 
 def xarray_open_dataset(
     src_path: str,
-    group: Optional[Any] = None,
+    multiscale: Optional[bool] = False,
     reference: Optional[bool] = False,
     anon: Optional[bool] = True,
     decode_times: Optional[bool] = True,
+    **kwargs: Any
 ):
     print(f"Group is {group}")
     """Open dataset."""
@@ -24,8 +25,8 @@ def xarray_open_dataset(
         "decode_times": decode_times,
         "consolidated": True
     }
-    if type(group) == int:
-        xr_open_args["group"] = group
+    if multiscale == True:
+        xr_open_args["group"] = kwargs['z']
 
     if reference:
         fs = fsspec.filesystem(
@@ -37,6 +38,7 @@ def xarray_open_dataset(
         xr_open_args["consolidated"] = False
 
     with Timer() as t:
+        import pdb; pdb.set_trace()
         ds = xarray.open_zarr(src_path, **xr_open_args)
     time_to_open = round(t.elapsed * 1000, 2)
     return ds, time_to_open
