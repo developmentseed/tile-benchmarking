@@ -5,6 +5,7 @@ import cProfile
 import json
 import logging
 import pstats
+import re
 import time
 from io import StringIO
 from typing import Callable
@@ -52,9 +53,30 @@ class Logger():
         self.logger.removeHandler(self.handler)
         log_lines = self.log_stream.getvalue().splitlines()
         if not self.quiet:
-            print(log_lines)
+            [print(line) for line in log_lines]
         self.handler.close()  
 
+def cprofile_list_to_dict(cprofile_list):
+    result_dict = {}
+    for entry in cprofile_list:
+        parts = entry.strip().split("    ")
+        if len(parts) >= 5:
+            # In case the function is recursive
+            # when it's a recursive call the bottom number is the 'primitive' or non-recursive calls.
+            # The larger number is the total number of invocations. Debatable which should be included.
+            parts[0] = parts[0].split("/")[0]
+            ncalls, tottime, percall, cumtime = map(float, parts[:4])
+            function = parts[4]
+            function_str = re.sub(r'^\d+\.\d+', '', function).strip()
+            entry_dict = {
+                "ncalls": ncalls,
+                "tottime": tottime,
+                "percall": percall,
+                "cumtime": cumtime,
+                "filename:lineno(function)": function_str,
+            }
+            result_dict[function_str] = entry_dict
+    return result_dict        
 
 def profile(
     add_to_return: bool = False,

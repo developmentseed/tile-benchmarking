@@ -35,6 +35,7 @@ class XarrayTileReader(XarrayReader):
         tilesize: int = 256,
         resampling_method: Resampling = "nearest",
         auto_expand: bool = True,
+        timing_results: dict = {},
     ) -> ImageData:
         """Read a Web Map tile from a dataset.
 
@@ -64,7 +65,7 @@ class XarrayTileReader(XarrayReader):
                 crs=self.tms.rasterio_crs,
                 auto_expand=auto_expand,
             )
-        print(f"Time elapsed for clipping data via rasterio: {round(t.elapsed * 1000, 5)}")
+        timing_results['rio.clip_box'] = round(t.elapsed * 1000, 2)
         
         with Timer() as t:
             ds = ds.rio.reproject(
@@ -73,7 +74,7 @@ class XarrayTileReader(XarrayReader):
                 transform=from_bounds(*tile_bounds, height=tilesize, width=tilesize),
                 resampling=Resampling[resampling_method],
             )
-        print(f"Time elapsed for reproject: {round(t.elapsed * 1000, 5)}")
+        timing_results['rio.reproject'] = round(t.elapsed * 1000, 2)
 
         # Forward valid_min/valid_max to the ImageData object
         minv, maxv = ds.attrs.get("valid_min"), ds.attrs.get("valid_max")
@@ -91,22 +92,20 @@ class XarrayTileReader(XarrayReader):
                 dataset_statistics=stats,
                 band_names=band_names,
             )
-        print(f"Time elapsed for creating ImageData: {round(t.elapsed * 1000, 5)}")
+        timing_results['ImageData()'] = round(t.elapsed * 1000, 2)
 
-        return image_data
+        return image_data, timing_results
  
-@profile(add_to_return=True, cprofile=True, quiet=True, log_library='s3fs')
+@profile(add_to_return=True, cprofile=False, quiet=True, log_library='s3fs')
 def tile(src_path: str, x: int, y: int, z: int, *, variable: str, time_slice: str = None, **kwargs: Any):
+    timing_results = {}
+    dataset_and_time = zarr_reader.xarray_open_dataset(src_path, decode_times=False, z=z, **kwargs)
+    dataset, time_to_open = dataset_and_time
+    timing_results['time_to_open'] = time_to_open
 
-    with zarr_reader.xarray_open_dataset(
-        src_path,
-        decode_times=False,
-        **kwargs,
-    ) as dataset:
-        with Timer() as t:
-            dataarray = zarr_reader.get_variable(dataset, variable=variable, time_slice=time_slice)
-        print(f"Time elapsed for dimension arrangement and array pre-processing: {round(t.elapsed * 1000, 2)}")
+    with Timer() as t:
+        dataarray = zarr_reader.get_variable(dataset, variable=variable, time_slice=time_slice)
+    timing_results['dimension_and_array_preprocessing'] = round(t.elapsed * 1000, 2)
         
-        with XarrayTileReader(dataarray) as src_dst:
-            return src_dst.tile(x, y, z)
-
+    with XarrayTileReader(dataarray) as src_dst:
+        return src_dst.tile(x, y, z, timing_results=timing_results)
