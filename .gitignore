@@ -19,3 +19,5 @@ __pycache__
 .ipynb_checkpoints
 *venv*
 cdk.context.json
+*.zarr
+*.nc
