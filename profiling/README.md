@@ -2,15 +2,18 @@
 
 These scripts are used to generate test data and for profiling tiling code.
 
-There are few different options for how to run the profiling code:
+In order to run these notebooks, you must be logged into [VEDA's JupyterHub](https://nasa-impact.github.io/veda-docs/services/jupyterhub.html).
 
-1. Locally on your machine 
-2. On the cloud-hosted jupyterhub instance.
+## Test Data
 
-The metadata can also be generated and stored locally or in the AWS cloud.
 
-1. pgSTAC - run the database locally via docker or on the cloud via cdk-pgstac deployment.
-2. zarr metadata + kerchunk references - can be referenced locally or via S3.
+## Test Data Generation
+
+The `cdk/` directory at the root of this repository hosts the code for deploying a pgSTAC database into AWS RDS.
+
+The `cmip6_pgstac/` directory includes scripts for generating the STAC json data and seeding the database.
+
+The `cmip6_reference/` directory includes scripts for generating a kerchunk reference dataset for the test dataset.
 
 In all cases, data files themselves are stored in AWS S3.
 
@@ -34,8 +37,9 @@ python -m venv venv-profiling
 source venv-profiling/bin/activate
 python -m pip install -U pip
 python -m pip install -r requirements.txt
-# revert changes to rio_tiler
-git checkout profiling/venv-profiling/lib/python3.9/site-packages/rio_tiler/
+# revert changes to rio_tiler if doing code profiling on rio_tiler
+# Can skip this step if not interested in those code timings.
+# git checkout profiling/venv-profiling/lib/python3.9/site-packages/rio_tiler/
 python -m ipykernel install --user --name=venv-profiling
 ```
 
@@ -63,7 +67,7 @@ papermill cmip6_pgstac/generate_cmip6_items.ipynb - \
 -p model $model -p variable $variable --log-level DEBUG
 ```
 
-## Step 3: Generate kerchunk reference for use with `titiler-xarray`
+## Step 2: Generate kerchunk reference for use with `titiler-xarray`
 
 The `cmip6-reference` directory contains the `generate-cmip6-kerchunk.ipynb,py` scripts for generating kerchunk reference files for profiling titiler-xarray.
 
@@ -76,7 +80,7 @@ papermill cmip6-reference/generate-cmip6-kerchunk.ipynb - \
 -p model $model -p variable $variable --log-level DEBUG
 ```
 
-## Step 4: Generate Zarr store and store on S3
+## Step 3: Generate Zarr stores and store on S3
 
 This took about 9 minutes and 18 seconds on my macbook pro (2.6 GHz 6-Core Intel Core i7, 16 GB memory).
 
@@ -96,7 +100,7 @@ You can run profiling notebook locally:
 jupyter notebook 
 ```
 
-Or you can run profiling notebook on a cloud-hosted jupyterhub instance. The VEDA Program includes a [2i2c JupyterHub](https://nasa-veda.2i2c.cloud/). Find documentation on how to request access [in the VEDA documentation](https://nasa-impact.github.io/veda-docs/services/jupyterhub.html).
+It is recommended to use the [VEDA JupyterHub](https://nasa-veda.2i2c.cloud/). Find documentation on how to request access [in the VEDA documentation](https://nasa-impact.github.io/veda-docs/services/jupyterhub.html).
 
 Once logged into a jupyterhub instance:
 
@@ -105,6 +109,6 @@ git clone https://github.com/developmentseed/tile-benchmarking.git
 cd tile-benchmarking/
 ```
 
-Depending on the jupyterhub instance, you may need to install the libraries in requirements.txt.
+You will likely need to install the libraries in requirements.txt.
 
 
