@@ -10,9 +10,11 @@ import xarray as xr
 import zarr
 import csv
 import os
-import traceback
+import sys
+sys.path.append('..')
+import zarr_helpers
 
-sources = url_dict = {
+sources = {
     "s3://veda-data-store-staging/EIS/zarr/FWI-GEOS-5-Hourly": {
         "collection_name": "FWI-GEOS-5-Hourly",
         "variable": "GEOS-5_FWI",
@@ -122,10 +124,12 @@ csv_columns = [
     "source",
     "variable",
     "shape",
-    "lat resolution",
-    "lon resolution",
+    "lat_resolution",
+    "lon_resolution",
     "chunks",
-    "chunk size mb",
+    "chunk_size_mb",
+    "number_coord_chunks",
+    "dtype",
     "compression"
 ]
 
@@ -144,44 +148,11 @@ for key, value in sources.items():
     drop_dim = value.get("drop_dim", False)
     anon = value.get("anon", True)
     transpose = value.get("transpose", False)
-    try:
-        if reference:
-            backend_kwargs = {
-                'consolidated': False,
-                'storage_options': {
-                    'fo': source,
-                    'remote_options': {'anon': True},
-                    'remote_protocol': 's3'
-                }
-            }
-            ds = xr.open_dataset("reference://", engine='zarr', backend_kwargs=backend_kwargs)
-        else:
-            ds = xr.open_dataset(source, engine='zarr', consolidated=True)
-    except Exception as e:
-        print(f"Failed to open {source} with error {e}")
-        traceback.print_exc()
-        continue
-    var = ds[variable]
-    shape = dict(zip(var.dims, var.shape))
-    lat_resolution = np.diff(var["lat"].values).mean()
-    lon_resolution = np.diff(var["lon"].values).mean()
-    chunks = var.encoding.get("chunks", "N/A")
-    dtype = var.encoding.get("dtype", "N/A")
-    chunks_dict = dict(zip(var.dims, chunks))
-    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024   
-    compression = var.encoding.get("compressor", "N/A")
+    ds = zarr_helpers.open_dataset(source, reference=reference, anon=anon, multiscale=False, z=0)
+    ds_specs = zarr_helpers.get_dataset_specs(source, ds[variable])
     with open(csv_file, "a", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-        writer.writerow({
-            "source": source,
-            "variable": variable,
-            "shape": shape,
-            "lat resolution": lat_resolution,
-            "lon resolution": lon_resolution,
-            "chunks": chunks_dict,
-            "chunk size mb": chunk_size_mb,
-            "compression": compression,
-        })
+        writer.writerow(ds_specs)
         csvfile.close()
 
     # Write results to s3
