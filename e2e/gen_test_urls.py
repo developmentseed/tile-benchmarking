@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import boto3
 import fsspec
 import math
 import random
@@ -7,6 +9,7 @@ import numpy as np
 import xarray as xr
 import zarr
 import csv
+import os
 import traceback
 
 sources = url_dict = {
@@ -55,7 +58,7 @@ def _percentage_split(size, percentages):
 
 tms = morecantile.tms.get("WebMercatorQuad")
 
-###########################################
+# ##########################################
 # INPUTS
 
 minzoom = 0
@@ -125,10 +128,12 @@ csv_columns = [
     "chunk size mb",
     "compression"
 ]
+
 # Write the information to the CSV file
 with open(csv_file, "w", newline="") as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
     writer.writeheader()
+    csvfile.close()
 
 for key, value in sources.items():
     source = key
@@ -141,10 +146,14 @@ for key, value in sources.items():
     transpose = value.get("transpose", False)
     try:
         if reference:
-            backend_kwargs={
+            backend_kwargs = {
                 'consolidated': False,
-                'storage_options': {'fo': source, 'remote_options': {'anon': True}, 'remote_protocol': 's3'}
-            }            
+                'storage_options': {
+                    'fo': source,
+                    'remote_options': {'anon': True},
+                    'remote_protocol': 's3'
+                }
+            }
             ds = xr.open_dataset("reference://", engine='zarr', backend_kwargs=backend_kwargs)
         else:
             ds = xr.open_dataset(source, engine='zarr', consolidated=True)
@@ -173,6 +182,18 @@ for key, value in sources.items():
             "chunk size mb": chunk_size_mb,
             "compression": compression,
         })
+        csvfile.close()
+
+    # Write results to s3
+    bucket = 'nasa-eodc-data-store'
+    s3dir = 'e2e'
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        aws_session_token=os.environ['AWS_SESSION_TOKEN']
+    )
+    s3.upload_file(csv_file, bucket, f"{s3dir}/{csv_file}")
 
     with open(f"urls/{collection_name}_urls.txt", "w") as f:
         f.write("HOST=https://dev-titiler-xarray.delta-backend.com\n")
