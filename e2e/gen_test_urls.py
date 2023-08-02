@@ -179,17 +179,6 @@ for key, value in sources.items():
         writer.writerow(ds_specs)
         csvfile.close()
 
-    # Write results to s3
-    bucket = 'nasa-eodc-data-store'
-    s3dir = 'e2e'
-    s3 = boto3.client(
-        's3',
-        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-        aws_session_token=os.environ['AWS_SESSION_TOKEN']
-    )
-    s3.upload_file(csv_file, bucket, f"{s3dir}/{csv_file}")
-
     with open(f"urls/{collection_name}_urls.txt", "w") as f:
         f.write("HOST=https://dev-titiler-xarray.delta-backend.com\n")
         f.write("PATH=tiles/\n")
