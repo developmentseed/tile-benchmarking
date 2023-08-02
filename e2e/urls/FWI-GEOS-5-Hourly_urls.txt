@@ -1,7 +1,7 @@
 HOST=https://dev-titiler-xarray.delta-backend.com
 PATH=tiles/
 EXT=.png
-QUERYSTRING=?reference=False&variable=GEOS-5_FWI&rescale=0,40&url=s3://veda-data-store-staging/EIS/zarr/FWI-GEOS-5-Hourly&transpose=False
+QUERYSTRING=?reference=False&variable=GEOS-5_FWI&rescale=0,40&url=s3://veda-data-store-staging/EIS/zarr/FWI-GEOS-5-Hourly
 $(HOST)/$(PATH)0/0/0$(EXT)$(QUERYSTRING)
 $(HOST)/$(PATH)1/0/1$(EXT)$(QUERYSTRING)
 $(HOST)/$(PATH)2/2/1$(EXT)$(QUERYSTRING)

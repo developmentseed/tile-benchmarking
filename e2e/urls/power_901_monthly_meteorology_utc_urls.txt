@@ -1,7 +1,7 @@
 HOST=https://dev-titiler-xarray.delta-backend.com
 PATH=tiles/
 EXT=.png
-QUERYSTRING=?reference=False&variable=TS&rescale=200,300&url=s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr&transpose=False
+QUERYSTRING=?reference=False&variable=TS&rescale=200,300&url=s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr
 $(HOST)/$(PATH)0/0/0$(EXT)$(QUERYSTRING)
 $(HOST)/$(PATH)1/1/0$(EXT)$(QUERYSTRING)
 $(HOST)/$(PATH)2/3/2$(EXT)$(QUERYSTRING)
