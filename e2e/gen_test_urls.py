@@ -122,6 +122,7 @@ def generate_extremas(bounds: list[float]):
 csv_file = "zarr_info.csv"
 csv_columns = [
     "source",
+    "collection_name",
     "variable",
     "shape",
     "lat_resolution",
@@ -149,7 +150,7 @@ for key, value in sources.items():
     anon = value.get("anon", True)
     transpose = value.get("transpose", False)
     ds = zarr_helpers.open_dataset(source, reference=reference, anon=anon, multiscale=False, z=0)
-    ds_specs = zarr_helpers.get_dataset_specs(source, ds[variable])
+    ds_specs = zarr_helpers.get_dataset_specs(collection_name, source, variable, ds)
     with open(csv_file, "a", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
         writer.writerow(ds_specs)

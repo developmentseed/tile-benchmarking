@@ -21,12 +21,12 @@ def open_dataset(dataset_url, reference: bool = False, anon: bool = True, multis
                 xr_open_args["group"] = z
             ds = xr.open_dataset(dataset_url, engine='zarr',  **xr_open_args)
     except Exception as e:
-        import pdb; pdb.set_trace();
         print(f"Failed to open {dataset_url} with error {e}")
         traceback.print_exc()
     return ds
 
-def get_dataset_specs(source: str, ds: xr.Dataset):
+def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.Dataset):
+    ds = ds[variable]
     shape = dict(zip(ds.dims, ds.shape))
     lat_resolution = np.diff(ds["lat"].values).mean()
     lon_resolution = np.diff(ds["lon"].values).mean()    
@@ -42,6 +42,8 @@ def get_dataset_specs(source: str, ds: xr.Dataset):
             number_coord_chunks += round(ds[key].shape[0]/ds[key].encoding['chunks'][0])
     return {
         'source': source,
+        'collection_name': collection_name,
+        'variable': variable,
         'shape': shape,
         'lat_resolution': lat_resolution,
         'lon_resolution': lon_resolution,
