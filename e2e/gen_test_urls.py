@@ -36,16 +36,39 @@ sources = {
         "variable": "sst",
         "rescale": "0,40",
         "reference": True,
-        "drop_dim": "zlev",
-        "drop_dim_value": 0,
+        "drop_dim_key": "zlev",
+        "drop_dim_value": "0", #must be a string otherwise can't be evaluated as truthy
         "anon": True,
     },
     "s3://yuvipanda-test1/cmr/gpm3imergdl.zarr": {
         "collection_name": "gpm3imergdl",
         "variable": "precipitationCal",
-        "rescale": "0,704",
-        "transpose": True
-    }
+        "rescale": "0,704"
+    },
+    "s3://nasa-eodc-data-store/365_262_262/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
+        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-365_262_262",
+        "variable": "tas",
+        "rescale": "200,300",
+        "bounds": [-179.875, -59.88, 179.9, 89.88]
+    },
+    "s3://nasa-eodc-data-store/600_1440_1/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
+        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-600_1440_1",
+        "variable": "tas",
+        "rescale": "200,300",
+        "bounds": [-179.875, -59.88, 179.9, 89.88]
+    },
+    "s3://nasa-eodc-data-store/600_1440_29/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
+        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-600_1440_29",
+        "variable": "tas",
+        "rescale": "200,300",
+        "bounds": [-179.875, -59.88, 179.9, 89.88]
+    },
+    "s3://nasa-eodc-data-store/600_1440_1_no-coord-chunks/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
+        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-no-coord-chunks",
+        "variable": "tas",
+        "rescale": "200,300",
+        "bounds": [-179.875, -59.88, 179.9, 89.88]
+    }    
 }
 
 def _percentage_split(size, percentages):
@@ -122,6 +145,7 @@ def generate_extremas(bounds: list[float]):
 csv_file = "zarr_info.csv"
 csv_columns = [
     "source",
+    "collection_name",
     "variable",
     "shape",
     "lat_resolution",
@@ -145,11 +169,11 @@ for key, value in sources.items():
     rescale = value["rescale"]
     collection_name = value["collection_name"]
     reference = value.get("reference", False)
-    drop_dim = value.get("drop_dim", False)
+    drop_dim_key = value.get("drop_dim_key", False)
+    drop_dim_value = value.get("drop_dim_value", False)
     anon = value.get("anon", True)
-    transpose = value.get("transpose", False)
     ds = zarr_helpers.open_dataset(source, reference=reference, anon=anon, multiscale=False, z=0)
-    ds_specs = zarr_helpers.get_dataset_specs(source, ds[variable])
+    ds_specs = zarr_helpers.get_dataset_specs(collection_name, source, variable, ds)
     with open(csv_file, "a", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
         writer.writerow(ds_specs)
@@ -170,7 +194,10 @@ for key, value in sources.items():
         f.write("HOST=https://dev-titiler-xarray.delta-backend.com\n")
         f.write("PATH=tiles/\n")
         f.write("EXT=.png\n")
-        f.write(f"QUERYSTRING=?reference={reference}&variable={variable}&rescale={rescale}&url={source}&transpose={transpose}\n")    
+        query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&rescale={rescale}&url={source}"
+        if drop_dim_key and drop_dim_value:
+            query_string = f"{query_string}&drop_dim={drop_dim_key}={drop_dim_value}"
+        f.write(f"{query_string}\n")
         rows = 0
         extremas, total_weight = generate_extremas(bounds=value.get("bounds", default_bounds))
         for zoom, start, end in _percentage_split(
