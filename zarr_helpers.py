@@ -28,8 +28,11 @@ def open_dataset(dataset_url, reference: bool = False, anon: bool = True, multis
 def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.Dataset):
     ds = ds[variable]
     shape = dict(zip(ds.dims, ds.shape))
-    lat_resolution = np.diff(ds["lat"].values).mean()
-    lon_resolution = np.diff(ds["lon"].values).mean()    
+    try:
+        lat_resolution = np.diff(ds["lat"].values).mean()
+        lon_resolution = np.diff(ds["lon"].values).mean()    
+    except Exception as e:
+        lat_resolution, lon_resolution = 'N/A', 'N/A'
     chunks = ds.encoding.get("chunks", "N/A")
     dtype = ds.encoding.get("dtype", "N/A")
     chunks_dict = dict(zip(ds.dims, chunks))
