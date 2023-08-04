@@ -6,51 +6,48 @@ from typing import Any, Dict, List, Optional
 import attr
 import fsspec
 import numpy
-import rioxarray
 import xarray
-from profiler.main import Timer
-from pyproj import CRS
+from morecantile import TileMatrixSet
+from rasterio.crs import CRS
+from rio_tiler.constants import WEB_MERCATOR_TMS, WGS84_CRS
+from rio_tiler.io.xarray import XarrayReader
+from rio_tiler.types import BBox
 from zarr import errors as zarr_errors
 
 def xarray_open_dataset(
     src_path: str,
-    multiscale: Optional[bool] = False,
+    group: Optional[int] = None,
     reference: Optional[bool] = False,
-    anon: Optional[bool] = True,
-    decode_times: Optional[bool] = False,
-    **kwargs: Any
-):
+    decode_times: Optional[bool] = True,
+    **kwargs: Any,
+) -> xarray.Dataset:
     """Open dataset."""
     xr_open_args: Dict[str, Any] = {
-        "decode_coords": False,
+        "decode_coords": "all",
         "decode_times": decode_times,
-        "consolidated": True
+        "consolidated": True,
     }
-    if multiscale == True:
-        xr_open_args["group"] = kwargs['z']
-
+    if type(group) == int:
+        xr_open_args["group"] = group
     if reference:
         fs = fsspec.filesystem(
             "reference",
             fo=src_path,
-            remote_options={"anon": anon},
+            remote_options={"anon": True},
         )
         src_path = fs.get_mapper("")
         xr_open_args["consolidated"] = False
 
-    with Timer() as t:
-        try:
-            ds = xarray.open_zarr(src_path, **xr_open_args)
-        except zarr_errors.PathNotFoundError as e:
-            # Fallback to the max group
-            del xr_open_args['group']
-            multiscale_ds = xarray.open_zarr(src_path, **xr_open_args)
-            paths = [dataset['path'] for dataset in multiscale_ds.multiscales[0]['datasets']]
-            max_group = max(paths)
-            ds = xarray.open_zarr(src_path, **xr_open_args, group=max_group)        
-        
-    time_to_open = round(t.elapsed * 1000, 2)
-    return ds, time_to_open
+    try:
+        ds = xarray.open_zarr(src_path, **xr_open_args)
+    except zarr_errors.PathNotFoundError as e:
+        # Fallback to the max group
+        del xr_open_args['group']
+        multiscale_ds = xarray.open_zarr(src_path, **xr_open_args)
+        paths = [dataset['path'] for dataset in multiscale_ds.multiscales[0]['datasets']]
+        max_group = max(paths)
+        ds = xarray.open_zarr(src_path, **xr_open_args, group=max_group)
+    return ds
 
 
 def get_variable(
@@ -66,16 +63,17 @@ def get_variable(
         dim_to_drop, dim_val = drop_dim.split("=")
         ds = ds.sel({dim_to_drop: dim_val}).drop(dim_to_drop)
     da = ds[variable]
-    # Make sure we have a valid CRS
-    crs = da.rio.crs or "epsg:4326"
-    da.rio.write_crs(crs, inplace=True)
 
-    if da.rio.crs == CRS.from_epsg(4326) and (da.x > 180).any():
+    if (da.x > 180).any():
         # Adjust the longitude coordinates to the -180 to 180 range
         da = da.assign_coords(x=(da.x + 180) % 360 - 180)
 
         # Sort the dataset by the updated longitude coordinates
         da = da.sortby(da.x)
+
+    # Make sure we have a valid CRS
+    crs = da.rio.crs or "epsg:4326"
+    da.rio.write_crs(crs, inplace=True)
 
     # TODO - address this time_slice issue
     if "time" in da.dims:
@@ -93,3 +91,75 @@ def get_variable(
             da = da.isel(time=0)
 
     return da
+
+
+@attr.s
+class ZarrReader(XarrayReader):
+    """ZarrReader: Open Zarr file and access DataArray."""
+
+    src_path: str = attr.ib()
+    variable: str = attr.ib()
+
+    # xarray.Dataset options
+    reference: bool = attr.ib(default=False)
+    decode_times: bool = attr.ib(default=False)
+    group: Optional[Any] = attr.ib(default=None)
+
+    # xarray.DataArray options
+    time_slice: Optional[str] = attr.ib(default=None)
+    drop_dim: Optional[str] = attr.ib(default=None)
+
+    tms: TileMatrixSet = attr.ib(default=WEB_MERCATOR_TMS)
+    geographic_crs: CRS = attr.ib(default=WGS84_CRS)
+
+    ds: xarray.Dataset = attr.ib(init=False)
+    input: xarray.DataArray = attr.ib(init=False)
+
+    bounds: BBox = attr.ib(init=False)
+    crs: CRS = attr.ib(init=False)
+
+    _minzoom: int = attr.ib(init=False, default=None)
+    _maxzoom: int = attr.ib(init=False, default=None)
+
+    _dims: List = attr.ib(init=False, factory=list)
+    _ctx_stack = attr.ib(init=False, factory=contextlib.ExitStack)
+
+    def __attrs_post_init__(self):
+        """Set bounds and CRS."""
+        self.ds = self._ctx_stack.enter_context(
+            xarray_open_dataset(
+                self.src_path,
+                group=self.group,
+                reference=self.reference,
+            ),
+        )
+        self.input = get_variable(
+            self.ds,
+            self.variable,
+            time_slice=self.time_slice,
+            drop_dim=self.drop_dim,
+        )
+
+        self.bounds = tuple(self.input.rio.bounds())
+        self.crs = self.input.rio.crs
+
+        self._dims = [
+            d
+            for d in self.input.dims
+            if d not in [self.input.rio.x_dim, self.input.rio.y_dim]
+        ]
+
+    @classmethod
+    def list_variables(
+        cls,
+        src_path: str,
+        group: Optional[Any] = None,
+        reference: Optional[bool] = False,
+    ) -> List[str]:
+        """List available variable in a dataset."""
+        with xarray_open_dataset(
+            src_path,
+            group=group,
+            reference=reference,
+        ) as ds:
+            return list(ds.data_vars)  # type: ignore
