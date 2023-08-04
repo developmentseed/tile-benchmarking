@@ -12,6 +12,7 @@ papermill==2.4.0
 Pillow==9.5.0
 psycopg==3.1.9
 psycopg-binary==3.1.9
+psycopg_pool
 pypgstac==0.7.9
 pystac==1.7.3
 rio_stac<0.7,>=0.6
