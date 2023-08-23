@@ -25,6 +25,13 @@ def open_dataset(dataset_url, reference: bool = False, anon: bool = True, multis
         traceback.print_exc()
     return ds
 
+def get_chunk_size(ds: xr.Dataset, variable: str):
+    ds = ds[variable]    
+    chunks = ds.encoding.get("chunks", "N/A")
+    dtype = ds.encoding.get("dtype", "N/A")    
+    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
+    return chunks, dtype, chunk_size_mb
+
 def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.Dataset):
     ds = ds[variable]
     shape = dict(zip(ds.dims, ds.shape))
@@ -33,10 +40,8 @@ def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.D
         lon_resolution = np.diff(ds["lon"].values).mean()    
     except Exception as e:
         lat_resolution, lon_resolution = 'N/A', 'N/A'
-    chunks = ds.encoding.get("chunks", "N/A")
-    dtype = ds.encoding.get("dtype", "N/A")
-    chunks_dict = dict(zip(ds.dims, chunks))
-    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
+    chunks, dtype, chunk_size_mb = get_chunk_size(ds)
+    chunks_dict = dict(zip(ds.dims, chunks))    
     compression = ds.encoding.get("compressor", "N/A")
     # calculate coordinate chunks
     number_coord_chunks = 0
