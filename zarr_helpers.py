@@ -25,8 +25,7 @@ def open_dataset(dataset_url, reference: bool = False, anon: bool = True, multis
         traceback.print_exc()
     return ds
 
-def get_chunk_size(ds: xr.Dataset, variable: str):
-    ds = ds[variable]    
+def get_chunk_size(ds: xr.DataArray): 
     chunks = ds.encoding.get("chunks", "N/A")
     dtype = ds.encoding.get("dtype", "N/A")    
     chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
