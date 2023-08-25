@@ -137,6 +137,7 @@ def get_dataset_specs_from_directory(zarr_directories: list, variable: str = 'da
 import morecantile
 import random
 from profiler.main import Timer
+import sys; sys.path.append('profiling')
 from titiler_xarray.titiler.xarray.reader import ZarrReader
 tms = morecantile.tms.get("WebMercatorQuad")
 

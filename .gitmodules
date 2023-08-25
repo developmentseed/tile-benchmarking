@@ -1,0 +1,3 @@
+[submodule "profiling/titiler_xarray"]
+	path = profiling/titiler_xarray
+	url = https://github.com/developmentseed/titiler-xarray
