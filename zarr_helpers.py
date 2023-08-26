@@ -122,7 +122,7 @@ def get_dataset_specs_from_directory(zarr_directories: list, variable: str = 'da
         try:
             # get the dataset specs
             ds = open_dataset(f"s3://{path}")
-            dataset_name = path.split('/')[-1]
+            dataset_name = path.split('/')[-2] + '/' + path.split('/')[-1]
             ds_specs = get_dataset_specs(dataset_name, f"s3://{path}", variable, ds)            
             datastore_specs[dataset_name] = ds_specs
             # product of all dimensions / 
