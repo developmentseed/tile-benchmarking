@@ -2,29 +2,7 @@ import xarray as xr
 import numpy as np
 import s3fs
 import traceback
-
-def open_dataset(dataset_url, reference: bool = False, anon: bool = True, multiscale: bool = False, z: int = 0):
-    ds = None
-    try:
-        if reference:
-            backend_kwargs = {
-                'consolidated': False,
-                'storage_options': {
-                    'fo': dataset_url,
-                    'remote_options': {'anon': anon},
-                    'remote_protocol': 's3'
-                }
-            }
-            ds = xr.open_dataset("reference://", engine='zarr', backend_kwargs=backend_kwargs)
-        else:
-            xr_open_args = { 'consolidated': True }
-            if multiscale == True:
-                xr_open_args["group"] = z
-            ds = xr.open_dataset(dataset_url, engine='zarr',  **xr_open_args)
-    except Exception as e:
-        print(f"Failed to open {dataset_url} with error {e}")
-        traceback.print_exc()
-    return ds
+from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, ZarrReader
 
 def get_chunk_size(ds: xr.DataArray): 
     chunks = ds.encoding.get("chunks", "N/A")
@@ -121,7 +99,7 @@ def get_dataset_specs_from_directory(zarr_directories: list, variable: str = 'da
     for path in zarr_directories:
         try:
             # get the dataset specs
-            ds = open_dataset(f"s3://{path}")
+            ds = xarray_open_dataset(f"s3://{path}")
             dataset_name = path.split('/')[-2] + '/' + path.split('/')[-1]
             ds_specs = get_dataset_specs(dataset_name, f"s3://{path}", variable, ds)            
             datastore_specs[dataset_name] = ds_specs
@@ -138,7 +116,6 @@ import morecantile
 import random
 from profiler.main import Timer
 import sys; sys.path.append('profiling')
-from titiler_xarray.titiler.xarray.reader import ZarrReader
 tms = morecantile.tms.get("WebMercatorQuad")
 
 def generate_random_tile(z):
@@ -147,13 +124,13 @@ def generate_random_tile(z):
     tile = tms.tile(random_lon, random_lat, z)
     return (tile.x, tile.y, tile.z)
 
-def time_tile_generation(zoom: tuple, source: str, variable: str):
+def time_tile_generation(zoom: int, source: str, variable: str, reference: bool = False):
     x, y, z = generate_random_tile(zoom)
     with Timer() as t:
         with ZarrReader(
             source,
             variable=variable,
-            reference=False
+            reference=reference
         ) as src_dst:
             image = src_dst.tile(
                 x,
