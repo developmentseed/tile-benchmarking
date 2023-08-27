@@ -4,28 +4,32 @@ import s3fs
 import traceback
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, ZarrReader
 
-def get_chunk_size(ds: xr.DataArray): 
-    chunks = ds.encoding.get("chunks", "N/A")
-    dtype = ds.encoding.get("dtype", "N/A")    
+def get_chunk_size(da: xr.DataArray): 
+    chunks = da.encoding.get("chunks", "N/A")
+    dtype = da.encoding.get("dtype", "N/A")    
     chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
     return chunks, dtype, chunk_size_mb
 
+def get_dataarray_size(da: xr.DataArray):
+    dtype = da.encoding.get("dtype", "N/A")
+    return np.prod(da.shape) * dtype.itemsize/1024/1024
+
 def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.Dataset):
-    ds = ds[variable]
-    shape = dict(zip(ds.dims, ds.shape))
+    da = ds[variable]
+    shape = dict(zip(da.dims, da.shape))
     try:
-        lat_resolution = np.diff(ds["lat"].values).mean()
-        lon_resolution = np.diff(ds["lon"].values).mean()    
+        lat_resolution = np.diff(da["lat"].values).mean()
+        lon_resolution = np.diff(da["lon"].values).mean()    
     except Exception as e:
         lat_resolution, lon_resolution = 'N/A', 'N/A'
-    chunks, dtype, chunk_size_mb = get_chunk_size(ds)
+    chunks, dtype, chunk_size_mb = get_chunk_size(da)
     chunks_dict = dict(zip(ds.dims, chunks))    
-    compression = ds.encoding.get("compressor", "N/A")
+    compression = da.encoding.get("compressor", "N/A")
     # calculate coordinate chunks
     number_coord_chunks = 0
-    for key in ds.coords.keys():
-        if ds[key].shape != ():
-            number_coord_chunks += round(ds[key].shape[0]/ds[key].encoding['chunks'][0])
+    for key in da.coords.keys():
+        if da[key].shape != ():
+            number_coord_chunks += round(da[key].shape[0]/da[key].encoding['chunks'][0])
     return {
         'source': source,
         'collection_name': collection_name,
@@ -35,6 +39,7 @@ def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.D
         'lon_resolution': lon_resolution,
         'chunk_size_mb': chunk_size_mb,
         'chunks': chunks_dict,
+        'dataarray_size': get_dataarray_size(da),
         'dtype': dtype,
         'number_coord_chunks': number_coord_chunks,
         'compression': compression
