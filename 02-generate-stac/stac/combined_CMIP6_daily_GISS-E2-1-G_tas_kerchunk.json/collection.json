@@ -101,6 +101,22 @@
     }
   },
   "license": "proprietary",
+  "summaries": {
+    "other": {
+      "number_coord_chunks": 3,
+      "tas": {
+        "chunks": [
+          1,
+          600,
+          1440
+        ],
+        "dtype": "float32",
+        "chunk_size_mb": 3.2958984375,
+        "compression": "Zlib(level=5)",
+        "total_array_size": 2406.005859375
+      }
+    }
+  },
   "assets": {
     "zarr-s3": {
       "href": "s3://nasa-eodc-data-store/test-data/cmip6-kerchunk/combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json",

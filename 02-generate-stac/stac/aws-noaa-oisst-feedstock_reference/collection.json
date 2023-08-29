@@ -190,6 +190,59 @@
     }
   },
   "license": "proprietary",
+  "summaries": {
+    "other": {
+      "number_coord_chunks": 4,
+      "ice": {
+        "chunks": [
+          1,
+          1,
+          720,
+          1440
+        ],
+        "dtype": "int16",
+        "chunk_size_mb": 1.9775390625,
+        "compression": "Zlib(level=4)",
+        "total_array_size": 29750.09765625
+      },
+      "err": {
+        "chunks": [
+          1,
+          1,
+          720,
+          1440
+        ],
+        "dtype": "int16",
+        "chunk_size_mb": 1.9775390625,
+        "compression": "Zlib(level=4)",
+        "total_array_size": 29750.09765625
+      },
+      "sst": {
+        "chunks": [
+          1,
+          1,
+          720,
+          1440
+        ],
+        "dtype": "int16",
+        "chunk_size_mb": 1.9775390625,
+        "compression": "Zlib(level=4)",
+        "total_array_size": 29750.09765625
+      },
+      "anom": {
+        "chunks": [
+          1,
+          1,
+          720,
+          1440
+        ],
+        "dtype": "int16",
+        "chunk_size_mb": 1.9775390625,
+        "compression": "Zlib(level=4)",
+        "total_array_size": 29750.09765625
+      }
+    }
+  },
   "assets": {
     "zarr-s3": {
       "href": "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json",

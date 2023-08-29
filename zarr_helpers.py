@@ -4,15 +4,30 @@ import s3fs
 import traceback
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, ZarrReader
 
-def get_chunk_size(da: xr.DataArray): 
-    chunks = da.encoding.get("chunks", "N/A")
-    dtype = da.encoding.get("dtype", "N/A")    
-    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
-    return chunks, dtype, chunk_size_mb
-
 def get_dataarray_size(da: xr.DataArray):
     dtype = da.encoding.get("dtype", "N/A")
     return np.prod(da.shape) * dtype.itemsize/1024/1024
+
+def get_array_chunk_information(da: xr.DataArray): 
+    chunks = da.encoding.get("chunks", "N/A")
+    dtype = da.encoding.get("dtype", "N/A")    
+    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
+    compression = da.encoding.get("compressor", "N/A")
+    #import pdb; pdb.set_trace()
+    return {
+        'chunks': chunks,
+        'dtype': str(dtype),
+        'chunk_size_mb': chunk_size_mb,
+        'compression': str(compression),
+        'total_array_size': get_dataarray_size(da)
+    }
+
+def get_number_coord_chunks(ds: xr.Dataset):
+    number_coord_chunks = 0
+    for key in ds.coords.keys():
+        if ds[key].shape != ():
+            number_coord_chunks += round(ds[key].shape[0]/ds[key].encoding['chunks'][0])
+    return number_coord_chunks
 
 def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.Dataset):
     da = ds[variable]
@@ -22,14 +37,9 @@ def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.D
         lon_resolution = np.diff(da["lon"].values).mean()    
     except Exception as e:
         lat_resolution, lon_resolution = 'N/A', 'N/A'
-    chunks, dtype, chunk_size_mb = get_chunk_size(da)
-    chunks_dict = dict(zip(ds.dims, chunks))    
-    compression = da.encoding.get("compressor", "N/A")
+    chunks, dtype, chunk_size_mb, compression, _ = get_array_chunk_information(da).values()
+    chunks_dict = dict(zip(ds.dims, chunks))
     # calculate coordinate chunks
-    number_coord_chunks = 0
-    for key in da.coords.keys():
-        if da[key].shape != ():
-            number_coord_chunks += round(da[key].shape[0]/da[key].encoding['chunks'][0])
     return {
         'source': source,
         'collection_name': collection_name,
@@ -41,7 +51,7 @@ def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.D
         'chunks': chunks_dict,
         'dataarray_size': get_dataarray_size(da),
         'dtype': dtype,
-        'number_coord_chunks': number_coord_chunks,
+        'number_coord_chunks': get_number_coord_chunks(ds),
         'compression': compression
     }
 
@@ -119,8 +129,8 @@ def get_dataset_specs_from_directory(zarr_directories: list, variable: str = 'da
 ### Tile test helpers
 import morecantile
 import random
-from profiler.main import Timer
 import sys; sys.path.append('profiling')
+#from profiler.main import Timer
 tms = morecantile.tms.get("WebMercatorQuad")
 
 def generate_random_tile(z):

@@ -162,6 +162,59 @@
     }
   },
   "license": "proprietary",
+  "summaries": {
+    "other": {
+      "number_coord_chunks": 6,
+      "lon_bnds": {
+        "chunks": [
+          144,
+          2
+        ],
+        "dtype": "float64",
+        "chunk_size_mb": 0.002197265625,
+        "compression": "Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)",
+        "total_array_size": 0.002197265625
+      },
+      "lat_bnds": {
+        "chunks": [
+          90,
+          2
+        ],
+        "dtype": "float64",
+        "chunk_size_mb": 0.001373291015625,
+        "compression": "Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)",
+        "total_array_size": 0.001373291015625
+      },
+      "height": {
+        "chunks": [],
+        "dtype": "float64",
+        "chunk_size_mb": 7.62939453125e-06,
+        "compression": "None",
+        "total_array_size": 7.62939453125e-06
+      },
+      "tas": {
+        "chunks": [
+          600,
+          90,
+          144
+        ],
+        "dtype": "float32",
+        "chunk_size_mb": 29.6630859375,
+        "compression": "Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)",
+        "total_array_size": 97.88818359375
+      },
+      "time_bnds": {
+        "chunks": [
+          1980,
+          2
+        ],
+        "dtype": "float64",
+        "chunk_size_mb": 0.03021240234375,
+        "compression": "Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)",
+        "total_array_size": 0.03021240234375
+      }
+    }
+  },
   "assets": {
     "zarr-s3": {
       "href": "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/",
