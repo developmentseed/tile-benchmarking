@@ -1,0 +1,114 @@
+{
+  "type": "Collection",
+  "id": "combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json",
+  "stac_version": "1.0.0",
+  "description": "for zarr testing",
+  "links": [
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json"
+    }
+  ],
+  "stac_extensions": [
+    "https://stac-extensions.github.io/datacube/v2.0.0/schema.json"
+  ],
+  "cube:dimensions": {
+    "time": {
+      "extent": [
+        "1950-01-01T12:00:00Z",
+        "1951-12-31T12:00:00Z"
+      ],
+      "description": "time",
+      "step": "P1DT0H0M0S",
+      "type": "temporal"
+    },
+    "lon": {
+      "axis": "x",
+      "extent": [
+        0.125,
+        359.875
+      ],
+      "step": 0.25,
+      "description": "longitude",
+      "reference_system": 4326,
+      "type": "spatial"
+    },
+    "lat": {
+      "axis": "y",
+      "extent": [
+        -59.875,
+        89.875
+      ],
+      "step": 0.25,
+      "description": "latitude",
+      "reference_system": 4326,
+      "type": "spatial"
+    }
+  },
+  "cube:variables": {
+    "tas": {
+      "type": "data",
+      "description": "Daily Near-Surface Air Temperature",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "unit": "K",
+      "attrs": {
+        "cell_methods": "area: mean time: maximum",
+        "comment": "near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax & tasmin",
+        "long_name": "Daily Near-Surface Air Temperature",
+        "standard_name": "air_temperature",
+        "units": "K"
+      },
+      "shape": [
+        730,
+        600,
+        1440
+      ],
+      "chunks": [
+        1,
+        600,
+        1440
+      ]
+    }
+  },
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          0,
+          -59,
+          359,
+          89
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "1950-01-01T12:00:00Z",
+          "1951-12-31T12:00:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary",
+  "assets": {
+    "zarr-s3": {
+      "href": "s3://nasa-eodc-data-store/test-data/cmip6-kerchunk/combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json",
+      "type": "application/vnd+zarr",
+      "title": "zarr",
+      "roles": [
+        "data"
+      ]
+    }
+  }
+}

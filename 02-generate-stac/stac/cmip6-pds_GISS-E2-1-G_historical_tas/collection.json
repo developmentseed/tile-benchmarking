@@ -1,0 +1,175 @@
+{
+  "type": "Collection",
+  "id": "cmip6-pds_GISS-E2-1-G_historical_tas",
+  "stac_version": "1.0.0",
+  "description": "for zarr testing",
+  "links": [
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json"
+    }
+  ],
+  "stac_extensions": [
+    "https://stac-extensions.github.io/datacube/v2.0.0/schema.json"
+  ],
+  "cube:dimensions": {
+    "time": {
+      "extent": [
+        "1850-01-16T12:00:00Z",
+        "2014-12-16T12:00:00Z"
+      ],
+      "description": "time",
+      "type": "temporal"
+    },
+    "lon": {
+      "axis": "x",
+      "extent": [
+        1.25,
+        358.75
+      ],
+      "step": 2.5,
+      "description": "longitude",
+      "reference_system": 4326,
+      "type": "spatial"
+    },
+    "lat": {
+      "axis": "y",
+      "extent": [
+        -89.0,
+        89.0
+      ],
+      "step": 2.0,
+      "description": "latitude",
+      "reference_system": 4326,
+      "type": "spatial"
+    }
+  },
+  "cube:variables": {
+    "height": {
+      "type": "auxiliary",
+      "description": "height",
+      "dimensions": [],
+      "unit": "m",
+      "attrs": {
+        "axis": "Z",
+        "long_name": "height",
+        "positive": "up",
+        "standard_name": "height",
+        "units": "m"
+      },
+      "shape": []
+    },
+    "lat_bnds": {
+      "type": "auxiliary",
+      "dimensions": [
+        "lat",
+        "bnds"
+      ],
+      "attrs": {},
+      "shape": [
+        90,
+        2
+      ],
+      "chunks": [
+        90,
+        2
+      ]
+    },
+    "lon_bnds": {
+      "type": "auxiliary",
+      "dimensions": [
+        "lon",
+        "bnds"
+      ],
+      "attrs": {},
+      "shape": [
+        144,
+        2
+      ],
+      "chunks": [
+        144,
+        2
+      ]
+    },
+    "tas": {
+      "type": "data",
+      "description": "Near-Surface Air Temperature",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "unit": "K",
+      "attrs": {
+        "cell_methods": "area: time: mean",
+        "comment": "near-surface (usually, 2 meter) air temperature",
+        "long_name": "Near-Surface Air Temperature",
+        "standard_name": "air_temperature",
+        "units": "K"
+      },
+      "shape": [
+        1980,
+        90,
+        144
+      ],
+      "chunks": [
+        600,
+        90,
+        144
+      ]
+    },
+    "time_bnds": {
+      "type": "auxiliary",
+      "dimensions": [
+        "time",
+        "bnds"
+      ],
+      "attrs": {},
+      "shape": [
+        1980,
+        2
+      ],
+      "chunks": [
+        1980,
+        2
+      ]
+    }
+  },
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          1,
+          -89,
+          358,
+          89
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "1850-01-16T12:00:00Z",
+          "2014-12-16T12:00:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary",
+  "assets": {
+    "zarr-s3": {
+      "href": "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/",
+      "type": "application/vnd+zarr",
+      "title": "zarr",
+      "roles": [
+        "data"
+      ]
+    }
+  }
+}
