@@ -1,0 +1,18 @@
+{
+  "type": "Catalog",
+  "id": "eodc-data-store-for-zarr-viz",
+  "stac_version": "1.0.0",
+  "description": "EODC Data Store for Zarr Viz",
+  "links": [
+    {
+      "rel": "root",
+      "href": "./catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "child",
+      "href": "./365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr/collection.json",
+      "type": "application/json"
+    }
+  ]
+}
