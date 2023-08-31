@@ -5,7 +5,6 @@ from geojson_pydantic import Polygon
 import json
 import morecantile
 import os
-from profiler.main import Timer, profile
 from psycopg.rows import class_row
 from psycopg_pool import ConnectionPool
 from rasterio.crs import CRS
@@ -49,7 +48,7 @@ def mosaic_reader(
     threads: int = MAX_THREADS,
     allowed_exceptions: Tuple = (TileOutsideBounds,),
     **kwargs,
-) -> Tuple[ImageData, List]:
+) -> ImageData:
     """Custom version of rio_tiler.mosaic.mosaic_reader."""
     pixel_selection = FirstMethod()
 
@@ -57,7 +56,6 @@ def mosaic_reader(
         chunk_size = threads if threads > 1 else len(mosaic_assets)
 
     assets_used: List = []
-    get_tile_timings: List = []
 
     crs: Optional[CRS]
     bounds: Optional[BBox]
@@ -75,9 +73,6 @@ def mosaic_reader(
             bounds = img.bounds
             band_names = img.band_names
 
-            # Retrieve the `timing` we set
-            get_tile_timings.append(img.metadata.get("timing"))
-
             assets_used.append(asset)
             pixel_selection.feed(img.as_masked())
 
@@ -91,27 +86,21 @@ def mosaic_reader(
                         crs=crs,
                         bounds=bounds,
                         band_names=band_names,
-                        # add `get_tile_timings` in the ImageData metadata
-                        metadata={"get_tile_timings": get_tile_timings},
                     ),
                     assets_used,
                 )
 
-    data, mask = pixel_selection.data#.data, pixel_selection.data.mask
+    data, mask = pixel_selection.data, pixel_selection.data.mask
     if data is None:
         raise EmptyMosaicError("Method returned an empty array")
 
-    return (
-        ImageData(
-            data,
-            mask,
-            assets=assets_used,
-            crs=crs,
-            bounds=bounds,
-            band_names=band_names,
-            metadata={"get_tile_timings": get_tile_timings},
-        ),
-        assets_used,
+    return ImageData(
+        data,
+        mask,
+        assets=assets_used,
+        crs=crs,
+        bounds=bounds,
+        band_names=band_names
     )
 
 def connect_to_database(aws_credentials):
@@ -127,9 +116,7 @@ def connect_to_database(aws_credentials):
         cf_client = boto3.client(
             'cloudformation',
             region_name=aws_region,
-            aws_access_key_id=aws_credentials['AccessKeyId'],
-            aws_secret_access_key=aws_credentials['SecretAccessKey'],
-            aws_session_token=aws_credentials['SessionToken']
+            **aws_credentials
         )
         response = cf_client.describe_stack_resources(StackName=stack_name)
 
@@ -150,9 +137,7 @@ def connect_to_database(aws_credentials):
             ec2 = boto3.client(
                 'ec2',
                 region_name=aws_region,
-                aws_access_key_id=aws_credentials['AccessKeyId'],
-                aws_secret_access_key=aws_credentials['SecretAccessKey'],
-                aws_session_token=aws_credentials['SessionToken']        
+                **aws_credentials        
             )
             response = ec2.authorize_security_group_ingress(
                 GroupId=sg_physical_resource_id,
@@ -168,9 +153,7 @@ def connect_to_database(aws_credentials):
         secrets_client = boto3.client(
             'secretsmanager',
             region_name=aws_region,
-            aws_access_key_id=aws_credentials['AccessKeyId'],
-            aws_secret_access_key=aws_credentials['SecretAccessKey'],
-            aws_session_token=aws_credentials['SessionToken']
+            **aws_credentials
         )
         response = secrets_client.get_secret_value(SecretId=secret_physical_resource_id)
         secret_value = response['SecretString']
@@ -182,17 +165,13 @@ def connect_to_database(aws_credentials):
         return pool
 
 """Create map tile."""
-
-@profile(add_to_return=True, cprofile=True, quiet=True, log_library='rasterio')
 def tile(
     pool: ConnectionPool,
     tile_x: int,
     tile_y: int,
     tile_z: int,
     query: Dict,
-    quiet: bool = True
 ) -> Tuple[ImageData, List[str]]:
-    timings = {}
 
     with pool.connection() as conn:
         with conn.cursor(row_factory=class_row(model.Search)) as cursor:
@@ -216,34 +195,22 @@ def tile(
     """Get Tile from multiple observation."""
 
     # PGSTAC Timing
-    with Timer() as t:
-        mosaic_assets = assets_for_tile(
-            tile_x,
-            tile_y,
-            tile_z,
-        )
-    find_assets = t.elapsed
-    timings["pgstac-search"] = round(find_assets * 1000, 2)
+    mosaic_assets = assets_for_tile(
+        tile_x,
+        tile_y,
+        tile_z,
+    )
 
     def _reader(
         item: Dict[str, Any], x: int, y: int, z: int, **kwargs: Any
     ) -> ImageData:
-        with Timer() as t:
-            with backend.reader(item, tms=backend.tms, **backend.reader_options) as src_dst:
-                img = src_dst.tile(x, y, z, **kwargs)
-        read_tile_time = round(t.elapsed * 1000, 2)
-        img.metadata = {"timing": read_tile_time}
-
+        with backend.reader(item, tms=backend.tms, **backend.reader_options) as src_dst:
+            img = src_dst.tile(x, y, z, **kwargs)
         return img
 
     # MOSAIC Timing
-    with Timer() as t:
-        img, assets = mosaic_reader(
-            mosaic_assets, _reader, tile_x, tile_y, tile_z, **{"assets": ["data"]}
-        )
-    timings["get_tile"] = img.metadata["get_tile_timings"]
-    timings["mosaic"] = round(t.elapsed * 1000, 2)
-    if quiet != True:
-        print(timings)
+    img = mosaic_reader(
+        mosaic_assets, _reader, tile_x, tile_y, tile_z, **{"assets": ["data"]}
+    )
 
-    return img, assets
+    return img
