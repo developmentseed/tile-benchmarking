@@ -47,14 +47,16 @@ The timings array will be the same length as the number of iterations.
     "dataset_id": "power_901_monthly_meteorology_utc.zarr",
     "source": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
     "variable": "TS",
-    "dataset_specs": {
-        "TS_array_size": "32MB",
-        "TS_chunks": {
-            "number_coord_chunks": 3,
-            "number_of_chunks": 8,
-            "chunk_size": "4MB",
-            "dtype": "float64",
-            "compression": "Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)"
+    "array_specs": {
+        "TS": {
+            "array_size": "32MB",
+            "chunks": {
+                "number_coord_chunks": 3,
+                "number_of_chunks": 8,
+                "chunk_size_mb": 4.99,
+                "dtype": "float64",
+                "compression": "Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)"
+            }
         }
     },
     "timings": [

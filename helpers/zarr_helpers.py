@@ -13,13 +13,13 @@ def get_array_chunk_information(da: xr.DataArray):
     dtype = da.encoding.get("dtype", "N/A")    
     chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
     compression = da.encoding.get("compressor", "N/A")
-    #import pdb; pdb.set_trace()
+    number_of_chunks = round(np.prod(da.shape) / np.prod(chunks))
     return {
         'chunks': chunks,
         'dtype': str(dtype),
         'chunk_size_mb': chunk_size_mb,
         'compression': str(compression),
-        'total_array_size': get_dataarray_size(da)
+        'number_of_chunks': number_of_chunks
     }
 
 def get_number_coord_chunks(ds: xr.Dataset):

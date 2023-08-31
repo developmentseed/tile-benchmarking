@@ -14,4 +14,8 @@ def fetch_and_set_credentials():
     os.environ['AWS_ACCESS_KEY_ID'] = credentials['AccessKeyId']
     os.environ['AWS_SECRET_ACCESS_KEY'] = credentials['SecretAccessKey']
     os.environ['AWS_SESSION_TOKEN'] = credentials['SessionToken']  
-    return credentials
+    return {
+        'aws_access_key_id': credentials['AccessKeyId'],
+        'aws_secret_access_key': credentials['SecretAccessKey'],
+        'aws_session_token': credentials['SessionToken']        
+    }
