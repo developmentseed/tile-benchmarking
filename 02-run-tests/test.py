@@ -35,7 +35,7 @@ class Test:
         variable: Optional[str] = None,
         extra_args: dict={},
     ):
-        self.name = self.__class__.__name__
+        self.test_name = self.__class__.__name__
         # Setting named attributes dynamically
         for key, value in locals().items():
             # FIXME: it still seems to be setting the self attribute
@@ -65,6 +65,7 @@ class Test:
         for i in range(0, batch_size):
             time = self.run(arguments[i])
             self.timings.append([time, arguments[i]])
+        return self.timings
     
     def store_results(self, credentials: dict):
         s3_client = boto3.client('s3', **credentials)
@@ -74,8 +75,8 @@ class Test:
         del instance_dict['bucket']
         del instance_dict['results_directory']
         # TODO - this is specific to pgstac COGs
-        if instance_dict['pool']:
-            del instance_dict['pool']
+        if instance_dict.get('pool'):
+            del instance_dict['pool']     
             
         instance_json = json.dumps(instance_dict)
 
@@ -83,10 +84,10 @@ class Test:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
         # Create an object key based on the timestamp, name, and dataset_id attributes
-        object_key = f"{self.results_directory}/{timestamp}_{self.name}_{self.dataset_id}.json"
+        object_key = f"{self.results_directory}/{timestamp}_{self.test_name}_{self.dataset_id}.json"
 
         # Write the JSON data to an S3 bucket
         s3_client.put_object(Body=instance_json, Bucket=self.bucket, Key=object_key)
 
         print(f"Wrote instance data to s3://{self.bucket}/{object_key}")
-        return
+        return f"s3://{self.bucket}/{object_key}"

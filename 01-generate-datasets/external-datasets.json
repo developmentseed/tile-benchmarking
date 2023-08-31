@@ -1,13 +1,14 @@
 {
     "power_901_monthly_meteorology_utc.zarr": {
-        "source": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
+        "dataset_url": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
         "variable": "TS"
     }, "cmip6-pds_GISS-E2-1-G_historical_tas": {
-        "source": "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/",
+        "dataset_url": "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/",
         "variable": "tas"
     }, "aws-noaa-oisst-feedstock_reference": {
-        "source": "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json",
-        "variable": "sst"
+        "dataset_url": "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json",
+        "variable": "sst",
+        "extra_args": {"reference": true }
     }
 }
 

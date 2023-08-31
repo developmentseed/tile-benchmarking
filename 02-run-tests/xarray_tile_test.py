@@ -8,8 +8,10 @@ import helpers.zarr_helpers as zarr_helpers
 class XarrayTileTest(Test):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if kwargs['extra_args'].get('reference') == True:
-            self.reference = True            
+        if kwargs.get('extra_args', {}).get('reference') == True:
+            self.reference = True
+        else:
+            self.reference = False
         ds = xarray_open_dataset(self.dataset_url, reference=self.reference)
         da = ds[self.variable]
         lat_values = ds.lat.values
@@ -19,14 +21,12 @@ class XarrayTileTest(Test):
             lon_values = (ds.lon + 180) % 360 - 180
         self.lat_extent = [math.ceil(np.min(lat_values)), math.floor(np.max(lat_values))]
         self.lon_extent = [math.ceil(np.min(lon_values)), math.floor(np.max(lon_values))]
-        self.array_specs = {
-            'number_coordinate_chunks': zarr_helpers.get_number_coord_chunks(ds),
-            self.variable: {
-                'total_array_size': zarr_helpers.get_dataarray_size(da),
-                'chunks': zarr_helpers.get_array_chunk_information(da)
-            },
-        }
-
+        self.number_coordinate_chunks = zarr_helpers.get_number_coord_chunks(ds)
+        self.total_array_size = zarr_helpers.get_dataarray_size(da)
+        chunk_data = zarr_helpers.get_array_chunk_information(da)
+        for key, value in chunk_data.items():
+            setattr(self, key, value)
+            
     def generate_arguments(self, batch_size: int = 1, zoom: int = 0):
         return [self.generate_random_tile(zoom) for i in range(batch_size)]
         

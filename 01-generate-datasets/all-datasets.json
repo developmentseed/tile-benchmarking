@@ -1,78 +1,84 @@
 {
     "cmip6-kerchunk": {
-        "source": "s3://nasa-eodc-data-store/test-data/cmip6-kerchunk/combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json",
-        "variable": "tas"
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-kerchunk/combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json",
+        "variable": "tas",
+        "extra_args": {
+            "reference": true
+        }
     },
     "power_901_monthly_meteorology_utc.zarr": {
-        "source": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
+        "dataset_url": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
         "variable": "TS"
     },
     "cmip6-pds_GISS-E2-1-G_historical_tas": {
-        "source": "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/",
+        "dataset_url": "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/",
         "variable": "tas"
     },
     "aws-noaa-oisst-feedstock_reference": {
-        "source": "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json",
-        "variable": "sst"
+        "dataset_url": "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json",
+        "variable": "sst",
+        "extra_args": {
+            "reference": true
+        }
     },
     "600_1440_29_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "source": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_29_CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_29_CMIP6_daily_GISS-E2-1-G_tas.zarr",
         "variable": "tas"
     },
     "600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "source": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr",
         "variable": "tas"
     },
     "365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "source": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr",
         "variable": "tas"
     },
-    "single_chunk/store_lat1024_lon2048.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat1024_lon2048.zarr",
+    "single_chunk_store_lat1024_lon2048.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat1024_lon2048.zarr",
         "variable": "data"
     },
-    "single_chunk/store_lat1448_lon2896.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat1448_lon2896.zarr",
+    "single_chunk_store_lat1448_lon2896.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat1448_lon2896.zarr",
         "variable": "data"
     },
-    "single_chunk/store_lat2048_lon4096.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat2048_lon4096.zarr",
+    "single_chunk_store_lat2048_lon4096.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat2048_lon4096.zarr",
         "variable": "data"
     },
-    "single_chunk/store_lat2896_lon5792.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat2896_lon5792.zarr",
+    "single_chunk_store_lat2896_lon5792.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat2896_lon5792.zarr",
         "variable": "data"
     },
-    "single_chunk/store_lat4096_lon8192.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat4096_lon8192.zarr",
+    "single_chunk_store_lat4096_lon8192.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat4096_lon8192.zarr",
         "variable": "data"
     },
-    "single_chunk/store_lat512_lon1024.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat512_lon1024.zarr",
+    "single_chunk_store_lat512_lon1024.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat512_lon1024.zarr",
         "variable": "data"
     },
-    "single_chunk/store_lat724_lon1448.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat724_lon1448.zarr",
+    "single_chunk_store_lat724_lon1448.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat724_lon1448.zarr",
         "variable": "data"
     },
-    "with_chunks/store_lat1448_lon2896.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat1448_lon2896.zarr",
+    "with_chunks_store_lat1448_lon2896.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat1448_lon2896.zarr",
         "variable": "data"
     },
-    "with_chunks/store_lat2048_lon4096.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat2048_lon4096.zarr",
+    "with_chunks_store_lat2048_lon4096.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat2048_lon4096.zarr",
         "variable": "data"
     },
-    "with_chunks/store_lat2896_lon5792.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat2896_lon5792.zarr",
+    "with_chunks_store_lat2896_lon5792.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat2896_lon5792.zarr",
         "variable": "data"
     },
-    "with_chunks/store_lat4096_lon8192.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat4096_lon8192.zarr",
+    "with_chunks_store_lat4096_lon8192.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat4096_lon8192.zarr",
         "variable": "data"
     },
-    "with_chunks/store_lat5793_lon11586.zarr": {
-        "source": "s3://nasa-eodc-data-store/nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat5793_lon11586.zarr",
+    "with_chunks_store_lat5793_lon11586.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/with_chunks/store_lat5793_lon11586.zarr",
         "variable": "data"
     }
 }
