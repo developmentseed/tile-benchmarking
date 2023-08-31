@@ -1,0 +1,14 @@
+aiohttp==3.8.0
+aiobotocore==2.5.0
+awscli
+boto3
+cftime
+fsspec==2023.6.0
+locust
+locust_plugins
+morecantile
+numpy
+requests
+s3fs
+xarray==2023.7.0
+zarr

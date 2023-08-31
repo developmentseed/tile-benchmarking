@@ -1,72 +1,59 @@
 # tile-benchmarking
 
-Home scripts for dynamic tile benchmarking using [titiler-xarray] and [titiler-pgstac].
+Tile benchmarking using [titiler-xarray](https://github.com/developmentseed/titiler-xarray) and [titiler-pgstac](https://github.com/stac-utils/titiler-pgstac).
+
+# Environment Setup
+
+It is recommended to run this project on the [VEDA JupyterHub](https://nasa-veda.2i2c.cloud/) if using datasets generated in `01-generate-datasets/`. See instructions on getting an account on the [VEDA JupyterHub docs page](https://nasa-impact.github.io/veda-docs/services/jupyterhub.html).
+
+It is the intention of this project that it can also be used to benchmark tiling for arbitrary zarr datasets. Examples are forthcoming.
+
+Use the `requirements.txt` to setup a python environment.
 
 # What's here
 
-## 01-generate-datasets
+## [`01-generate-datasets/`](01-generate-datasets/)
 
 This directory includes notebooks for generating:
 
 * "fake" zarr datasets: A notebook for generating Zarr datasets vary by chunk size (higher and higher spatial resolution for the spatial extent of a chunk) and number of chunks (same chunk size for higher and higher spatial resolutions of the array's spatial extent.
 * cmip6 kerchunk datasets: A notebook for generating a kerchunk reference for CMIP6 data.
 * cmip6 zarr datasets: A notebook for generating CMIP6 zarr data at varying chunk shapes.
+* cmip6-pgstac/: A directory with a notebook and instructions on generating STAC for CMIP6 COGs.
 
 You can skip this directory entirely unless you are interested in how the datasets were generated and / or want to modify them for any reason.
 
-ADD ME: COG data generation
+## [`02-run-tests/`](02-run-tests/)
 
-## 02-tests
+See the notebooks in `02-run-tests/` for examples on how to run tests.
 
-You can run tests on the datasets generated for this project via:
+At this time, tests exists for timing tile code for xarray and COGs.
 
-```bash
-test-tiling-code input-sources.json
-```
+TODO: Provide example of how to run a test on a new dataset.
+TODO: Run many tests and provide examples of how to report results.
+TODO: Add tests to run against API
+TODO: Add sub-tile code block timings
 
-This will time tile generation for everything in `input-sources.csv`
+## [`03-e2e/`](03-e2e)
 
-Or you can run tests on a spefific data source:
+Instructions on how to run e2e tests for titiler-xarray with locust and siege.
 
-```bash
-test-tiling-code --url foo.zarr --variable bar
-```
+## [`cdk/`](cdk/)
 
-Additional arguments:
+You can skip this directory unless you are interested in (re)deploying the pgSTAC database for this project.
 
-* `--zoom`: an integer to test only one zoom
-* `--credentials`: a dictionary of AWS credentials used to make requests to `url`
-* `--iters`: number of times to run tests
+The cdk/ directory at the root of this repository hosts the code for deploying a pgSTAC database into AWS RDS.
 
-The output will be a json with more information about the dataset as well as an array of timings.
+See [eoapi-cdk](https://github.com/developmentseed/eoapi-cdk) if you are interested in the deployment of pgSTAC using CDK.
 
-The timings array will be the same length as the number of iterations.
+## [`helpers/`](helpers)
 
-```json
-{
-    "dataset_id": "power_901_monthly_meteorology_utc.zarr",
-    "source": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
-    "variable": "TS",
-    "array_specs": {
-        "TS": {
-            "array_size": "32MB",
-            "chunks": {
-                "number_coord_chunks": 3,
-                "number_of_chunks": 8,
-                "chunk_size_mb": 4.99,
-                "dtype": "float64",
-                "compression": "Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)"
-            }
-        }
-    },
-    "timings": [
-        // time, extra_args
-        [429, {"tile": [0,0,0]}],
-        [513, {"tile": [1,1,1]}],
-        ...
-    ]]
-}
-```
+Python functions used more than once in this project are stored here.
 
-ADD ME: Run tests against the API
-ADD ME: Run COG tiling tests
+## [`titiler_xarray/`](titiler_xarray/)
+
+A git submodule of the [titiler-xarray](https://github.com/developmentseed/titiler-xarray) project in order to profile that codebase.
+
+## Other TODOs:
+
+* Add linting and cleanup unused functions
