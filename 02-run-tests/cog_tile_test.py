@@ -40,9 +40,7 @@ class CogTileTest(Test):
         del kwargs['extra_args']['credentials']
         self.set_gdal_vars = kwargs.get('extra_args', {}).get('set_gdal_vars', False)
         self.set_or_unset_gdal(self.set_gdal_vars)
-        self.query = kwargs.get('extra_args', {}).get('query')
-        self.lat_extent = [-90, 90]
-        self.lon_extent = [-180, 180]        
+        self.query = kwargs.get('extra_args', {}).get('query')     
         if self.query == None:
             raise Exception('Please pass a query to profile pgstac.')
 

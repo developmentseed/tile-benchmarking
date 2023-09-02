@@ -57,3 +57,4 @@ A git submodule of the [titiler-xarray](https://github.com/developmentseed/titil
 ## Other TODOs:
 
 * Add linting and cleanup unused functions
+* Replace helpers/profile_pgstac.py with https://github.com/stac-utils/titiler-pgstac/blob/main/titiler/pgstac/mosaic.py

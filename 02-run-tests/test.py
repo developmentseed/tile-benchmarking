@@ -33,6 +33,8 @@ class Test:
         bucket: str='nasa-eodc-data-store',
         results_directory: str='test-results',
         variable: Optional[str] = None,
+        lat_extent: Optional[list] = None,
+        lon_extent: Optional[list] = None,
         extra_args: dict={},
     ):
         self.test_name = self.__class__.__name__

@@ -1,3 +1,4 @@
+carbonplan_data
 cftime==1.6.2
 fsspec==2023.5.0
 geojson-pydantic==0.6.2
@@ -7,12 +8,14 @@ jupytext==1.14.7
 kerchunk==0.1.2
 loguru==0.7.0
 morecantile==3.4.0
+ndpyramid
 papermill==2.4.0
 Pillow==9.5.0
 psycopg==3.1.9
 psycopg-binary==3.1.9
+psycopg-pool
 pypgstac==0.7.9
-pydantic==1.10.8
+pydantic==1.10.10
 pystac==1.7.3
 rio_stac<0.7,>=0.6
 rio-tiler==4.1.11

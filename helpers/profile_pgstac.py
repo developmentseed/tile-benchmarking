@@ -90,7 +90,7 @@ def mosaic_reader(
                     assets_used,
                 )
 
-    data, mask = pixel_selection.data, pixel_selection.data.mask
+    data, mask = pixel_selection.data #, pixel_selection.data.mask
     if data is None:
         raise EmptyMosaicError("Method returned an empty array")
 
