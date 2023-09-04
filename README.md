@@ -8,7 +8,13 @@ It is recommended to run this project on the [VEDA JupyterHub](https://nasa-veda
 
 It is the intention of this project that it can also be used to benchmark tiling for arbitrary zarr datasets. Examples are forthcoming.
 
-Use the `requirements.txt` to setup a python environment.
+Use the `requirements.txt` or `environment.yaml` to setup a python environment.
+
+```
+pip install -r requirements.txt
+conda|mamba env create -f environment.yaml
+conda|mamba activate tile-benchmarking
+```
 
 # What's here
 

@@ -1,8 +1,11 @@
+boto3
 carbonplan_data
 cftime==1.6.2
 fsspec==2023.5.0
 geojson-pydantic==0.6.2
 h5py==3.8.0
+hvplot
+holoviews
 ipykernel==6.23.1
 jupytext==1.14.7
 kerchunk==0.1.2
