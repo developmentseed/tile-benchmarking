@@ -1,0 +1,1 @@
+{"cmip6-kerchunk": {"dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-kerchunk/combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json", "variable": "tas", "extra_args": {"reference": true}}}
