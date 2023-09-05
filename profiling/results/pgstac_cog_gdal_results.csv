@@ -1,0 +1,3 @@
+gdal_vars_set?,tile times,mean total time
+with_gdal_vars,"[342.99, 53.75, 52.85]",149.86333333333334
+without_gdal_vars,"[16064.17, 27977.9, 15404.97]",19815.68
