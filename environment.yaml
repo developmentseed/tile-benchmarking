@@ -8,6 +8,7 @@ dependencies:
     - boto3
     - carbonplan_data
     - cftime==1.6.2
+    - dask
     - fsspec==2023.5.0
     - geojson-pydantic==0.6.2
     - h5py==3.8.0
