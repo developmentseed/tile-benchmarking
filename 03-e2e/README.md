@@ -49,9 +49,9 @@ python gen_test_urls.py
 You can also run tests using siege.
 
 ```bash
-siege -f urls/CMIP6_GISS-E2-1-G_historical_urls.txt -c4 -r25 -l
-siege -f urls/gpm3imergdl_urls.txt -c4 -r25 -l
-# ... so on
+for file in $(find urls -name "*.txt" -type f); do
+  siege -f "$file" --concurrent=4 --reps=10
+done
 ```
 
 ## Read results

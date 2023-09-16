@@ -8,24 +8,6 @@ def get_dataarray_size(da: xr.DataArray):
     dtype = da.encoding.get("dtype", "N/A")
     return np.prod(da.shape) * dtype.itemsize/1024/1024
 
-def get_array_chunk_information(da: xr.DataArray): 
-    chunks = da.encoding.get("chunks", "N/A")
-    chunks_dict = dict(zip(da.dims, chunks))
-    shape_dict = dict(zip(da.dims, da.shape))
-    dtype = da.encoding.get("dtype", "N/A")    
-    chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
-    compression = da.encoding.get("compressor", "N/A")
-    # number of chunks in space
-    number_of_spatial_chunks = (shape_dict['lat']/chunks_dict['lat']) * (shape_dict['lon']/chunks_dict['lon'])
-    return {
-        'chunks': chunks_dict,
-        'shape_dict': shape_dict,
-        'dtype': str(dtype),
-        'chunk_size_mb': chunk_size_mb,
-        'compression': str(compression),
-        'number_of_spatial_chunks': number_of_spatial_chunks
-    }
-
 def get_number_coord_chunks(ds: xr.Dataset):
     number_coord_chunks = 0
     for key in ds.coords.keys():
@@ -33,30 +15,26 @@ def get_number_coord_chunks(ds: xr.Dataset):
             number_coord_chunks += round(ds[key].shape[0]/ds[key].encoding['chunks'][0])
     return number_coord_chunks
 
-def get_dataset_specs(collection_name: str, source: str, variable: str, ds: xr.Dataset):
-    da = ds[variable]
-    shape = dict(zip(da.dims, da.shape))
-    try:
-        lat_resolution = np.diff(da["lat"].values).mean()
-        lon_resolution = np.diff(da["lon"].values).mean()    
-    except Exception as e:
-        lat_resolution, lon_resolution = 'N/A', 'N/A'
-    chunks, dtype, chunk_size_mb, compression, _ = get_array_chunk_information(da).values()
-    chunks_dict = dict(zip(ds.dims, chunks))
-    # calculate coordinate chunks
+def get_array_chunk_information(ds: xr.Dataset, variable: str, multiscale: bool = False): 
+    if multiscale: # TODO
+        chunks, shape_dict, chunks_dict, dtype, chunk_size_mb, compression, number_of_spatial_chunks = ["N/A"] * 7
+    else:
+        da = ds[variable]
+        chunks = da.encoding.get("chunks", "N/A")
+        chunks_dict = dict(zip(da.dims, chunks))
+        shape_dict = dict(zip(da.dims, da.shape))
+        dtype = da.encoding.get("dtype", "N/A")    
+        chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
+        compression = da.encoding.get("compressor", "N/A")
+        number_of_spatial_chunks = (shape_dict['lat']/chunks_dict['lat']) * (shape_dict['lon']/chunks_dict['lon'])
     return {
-        'source': source,
-        'collection_name': collection_name,
-        'variable': variable,
-        'shape': shape,
-        'lat_resolution': lat_resolution,
-        'lon_resolution': lon_resolution,
-        'chunk_size_mb': chunk_size_mb,
         'chunks': chunks_dict,
-        'dataarray_size': get_dataarray_size(da),
-        'dtype': dtype,
-        'number_coord_chunks': get_number_coord_chunks(ds),
-        'compression': compression
+        'shape_dict': shape_dict,
+        'dtype': str(dtype),
+        'chunk_size_mb': chunk_size_mb,
+        'compression': str(compression),
+        'number_of_spatial_chunks': number_of_spatial_chunks,
+        'number_coordinate_chunks': get_number_coord_chunks(ds)
     }
 
 def generate_data_store(

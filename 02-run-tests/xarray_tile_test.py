@@ -29,7 +29,7 @@ class XarrayTileTest(Test):
             self.number_coordinate_chunks = zarr_helpers.get_number_coord_chunks(ds) 
             da = ds[self.variable]
             self.total_array_size = zarr_helpers.get_dataarray_size(da)
-            chunk_data = zarr_helpers.get_array_chunk_information(da)
+            chunk_data = zarr_helpers.get_array_chunk_information(ds, self.variable)
             for key, value in chunk_data.items():
                 setattr(self, key, value)
             

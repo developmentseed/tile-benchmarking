@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import boto3
+import json
 import fsspec
 import math
 import random
@@ -12,64 +13,25 @@ import csv
 import os
 import sys
 sys.path.append('..')
-import zarr_helpers
+import helpers.zarr_helpers as zarr_helpers
+from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, ZarrReader
 
-sources = {
-    "s3://veda-data-store-staging/EIS/zarr/FWI-GEOS-5-Hourly": {
-        "collection_name": "FWI-GEOS-5-Hourly",
-        "variable": "GEOS-5_FWI",
-        "rescale": "0,40",
-        "bounds": [-180, -58, 179.4, 75]
-    },
-    "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr": {
-        "collection_name": "power_901_monthly_meteorology_utc",
-        "variable": "TS",
-        "rescale": "200,300",
-    },
-    "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/": {
-        "collection_name": "CMIP6_GISS-E2-1-G_historical",
-        "variable": "tas",
-        "rescale": "200,300",
-    },
-    "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json": {
-        "collection_name": "aws-noaa-oisst-avhrr-only",
-        "variable": "sst",
-        "rescale": "0,40",
-        "reference": True,
-        "drop_dim_key": "zlev",
-        "drop_dim_value": "0", #must be a string otherwise can't be evaluated as truthy
-        "anon": True,
-    },
-    "s3://yuvipanda-test1/cmr/gpm3imergdl.zarr": {
-        "collection_name": "gpm3imergdl",
-        "variable": "precipitationCal",
-        "rescale": "0,704"
-    },
-    "s3://nasa-eodc-data-store/365_262_262/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-365_262_262",
-        "variable": "tas",
-        "rescale": "200,300",
-        "bounds": [-179.875, -59.88, 179.9, 89.88]
-    },
-    "s3://nasa-eodc-data-store/600_1440_1/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-600_1440_1",
-        "variable": "tas",
-        "rescale": "200,300",
-        "bounds": [-179.875, -59.88, 179.9, 89.88]
-    },
-    "s3://nasa-eodc-data-store/600_1440_29/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-600_1440_29",
-        "variable": "tas",
-        "rescale": "200,300",
-        "bounds": [-179.875, -59.88, 179.9, 89.88]
-    },
-    "s3://nasa-eodc-data-store/600_1440_1_no-coord-chunks/CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "collection_name": "CMIP6_daily_GISS-E2-1-G_tas-no-coord-chunks",
-        "variable": "tas",
-        "rescale": "200,300",
-        "bounds": [-179.875, -59.88, 179.9, 89.88]
-    }    
-}
+# Load external data store, cmip6 kerchunk data store, and cmip6 zarr data stores
+files = [
+    '../01-generate-datasets/external-datasets.json',
+    '../01-generate-datasets/cmip6-zarr-datasets.json',
+    '../01-generate-datasets/cmip6-kerchunk-dataset.json',
+]
+
+with open(files[0], "r") as f1, \
+     open(files[1], "r") as f2, \
+     open(files[2], "r") as f3:
+    dict1 = json.load(f1)
+    dict2 = json.load(f2)
+    dict3 = json.load(f3)
+
+# Step 2: Merge the dictionaries
+sources = {**dict1, **dict2, **dict3}
 
 def _percentage_split(size, percentages):
     """Freely copied from TileSiege https://github.com/bdon/TileSiege"""
@@ -87,7 +49,7 @@ tms = morecantile.tms.get("WebMercatorQuad")
 # INPUTS
 
 minzoom = 0
-maxzoom = 7
+maxzoom = 6
 max_url = 100
 default_bounds = [-180, -90, 180, 90]
 
@@ -140,52 +102,35 @@ def generate_extremas(bounds: list[float]):
         }
     return extremas, total_weight
 
-
 # Prepare the CSV file
 csv_file = "zarr_info.csv"
-csv_columns = [
-    "source",
-    "collection_name",
-    "variable",
-    "shape",
-    "lat_resolution",
-    "lon_resolution",
-    "chunks",
-    "chunk_size_mb",
-    "number_coord_chunks",
-    "dtype",
-    "compression"
-]
 
-# Write the information to the CSV file
-with open(csv_file, "w", newline="") as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-    writer.writeheader()
-    csvfile.close()
-
-for key, value in sources.items():
-    source = key
+for idx, dataset in enumerate(sources.items()):
+    key, value = dataset
+    collection_name = key
+    source = value['dataset_url']
     variable = value["variable"]
-    rescale = value["rescale"]
-    collection_name = value["collection_name"]
-    reference = value.get("reference", False)
-    drop_dim_key = value.get("drop_dim_key", False)
-    drop_dim_value = value.get("drop_dim_value", False)
-    anon = value.get("anon", True)
-    ds = zarr_helpers.open_dataset(source, reference=reference, anon=anon, multiscale=False, z=0)
-    ds_specs = zarr_helpers.get_dataset_specs(collection_name, source, variable, ds)
-    with open(csv_file, "a", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-        writer.writerow(ds_specs)
+    reference = value.get("extra_args", {}).get("reference", False)
+    multiscale = value.get("extra_args", {}).get("multiscale", False)
+    ds = xarray_open_dataset(source, reference=reference)
+    array_specs = {
+        'collection_name': collection_name,
+        'source': source
+    }
+    array_specs.update(zarr_helpers.get_array_chunk_information(ds, variable=variable, multiscale=multiscale))
+    mode = "w" if idx == 0 else "a"
+    with open(csv_file, mode, newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=array_specs.keys())
+        if idx == 0:
+            writer.writeheader()
+        writer.writerow(array_specs)
         csvfile.close()
 
     with open(f"urls/{collection_name}_urls.txt", "w") as f:
         f.write("HOST=https://dev-titiler-xarray.delta-backend.com\n")
         f.write("PATH=tiles/\n")
         f.write("EXT=.png\n")
-        query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&rescale={rescale}&url={source}"
-        if drop_dim_key and drop_dim_value:
-            query_string = f"{query_string}&drop_dim={drop_dim_key}={drop_dim_value}"
+        query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&url={source}"
         f.write(f"{query_string}\n")
         rows = 0
         extremas, total_weight = generate_extremas(bounds=value.get("bounds", default_bounds))
