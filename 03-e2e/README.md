@@ -40,9 +40,12 @@ python gen_test_urls.py
 
 ## Run Locust
 
-```bash
-./run-all.sh
-```
+See [.github/workflows/run-benchmarks.yml](../.github/workflows/run-benchmarks.yml) for an example of how to run locust.
+
+### Read results
+
+[`read-results.ipynb`](./read-results.ipynb) is a Jupyter notebook that reads the results CSV files.
+
 
 ## Run siege
 
@@ -50,10 +53,8 @@ You can also run tests using siege.
 
 ```bash
 for file in $(find urls -name "*.txt" -type f); do
-  siege -f "$file" --concurrent=4 --reps=10
+  siege -f "$file" --concurrent=4 --reps=10 
 done
+
+siege -f urls/600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr_urls.txt --concurrent=4 --reps=10 -l \ 600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr_urls.txt.out
 ```
-
-## Read results
-
-[`read-results.ipynb`](./read-results.ipynb) is a Jupyter notebook that reads the results CSV files.
