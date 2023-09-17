@@ -41,5 +41,6 @@ jobs:
     - name: Upload results to S3
       run: |
         current_time=$(date +"%Y-%m-%d_%H-%M-%S")
+        aws s3 rm s3://nasa-eodc-data-store/tile-benchmarking-results/latest/ --recursive
         aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/latest/ --recursive
         aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/$current_time/ --recursive
