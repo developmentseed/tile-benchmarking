@@ -1,0 +1,44 @@
+name: Run Benchmarks
+
+on:
+  push:
+    branches:
+      - feat/run-benchmarks  # Trigger the workflow on push to the main branch
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Git clone the repository
+      uses: actions/checkout@v3
+  
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install requirements
+      run: pip install -r requirements.txt
+      working-directory: 03-e2e
+
+    - name: Run locus on files in urls/ directory and store results in results/
+      run: |
+        mkdir -p results
+        for file in urls/*; do
+          locust -i 10 --urls-file=$file --csv=results/$(basename ${file%.*})
+        done
+      working-directory: 03-e2e
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::444055461661:role/github-actions-role-eodc
+        role-session-name: samplerolesession
+        aws-region: us-west-2
+
+    - name: Upload results to S3
+      run: |
+        current_time=$(date +"%Y-%m-%d_%H-%M-%S")
+        aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/latest/ --recursive
+        aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/$current_time/ --recursive
