@@ -5,6 +5,10 @@ on:
     branches:
       - feat/run-benchmarks  # Trigger the workflow on push to the main branch
 
+permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+
 jobs:
   benchmark:
     runs-on: ubuntu-latest
