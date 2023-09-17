@@ -22,7 +22,7 @@ jobs:
       run: pip install -r requirements.txt
       working-directory: 03-e2e
 
-    - name: Run locus on files in urls/ directory and store results in results/
+    - name: Run locust on files in urls/ directory and store results in results/
       run: |
         mkdir -p results
         for file in urls/*; do
