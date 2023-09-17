@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 ## Generating URLs to Test
 
-Note: for the FWI-GEOS-5-Hourly dataset (or any dataset in veda-data-store and veda-data-store-staging), the `gen_test_urls.py` script requires data access via a role from the SMCE VEDA AWS account. Please skip this dataset or contact the SMCE team for access.
+The `gen_test_urls.py` script includes files in s3://nasa-eodc-data-store and requires data access via a role from the SMCE VEDA AWS account. Please skip this dataset or contact the SMCE team for access.
 
 If you have role-based access to those buckets, you will need to assume the role using MFA and assume that role.
 
@@ -45,7 +45,6 @@ See [.github/workflows/run-benchmarks.yml](../.github/workflows/run-benchmarks.y
 ### Read results
 
 [`read-results.ipynb`](./read-results.ipynb) is a Jupyter notebook that reads the results CSV files.
-
 
 ## Run siege
 

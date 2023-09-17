@@ -48,3 +48,4 @@ jobs:
         aws s3 rm s3://nasa-eodc-data-store/tile-benchmarking-results/latest/ --recursive
         aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/latest/ --recursive
         aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/$current_time/ --recursive
+      working-directory: 03-e2e
