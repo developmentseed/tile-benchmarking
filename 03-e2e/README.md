@@ -8,30 +8,23 @@ Tests can be run using [https://locust.io/](https://locust.io/) or [siege](https
 
 ## Environment Setup
 
-```bash
-# It's recommanded to use virtual environment
-cd e2e
-python -m pip install --upgrade virtualenv
-virtualenv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+See README at the root of this repository.
+
+## Set credentials
+
+Scripts reference files in s3://nasa-eodc-data-store and requires data access via a role from the SMCE VEDA AWS account.
+
+YOu can either set environment variables for access yourself or, if logged into the VEDA JupyterHub you can run:
+
 ```
+python helpers/eodc_hub_role.py
+```
+
+and use the output to set credentials.
 
 ## Generating URLs to Test
 
-The `gen_test_urls.py` script includes files in s3://nasa-eodc-data-store and requires data access via a role from the SMCE VEDA AWS account. Please skip this dataset or contact the SMCE team for access.
-
-If you have role-based access to those buckets, you will need to assume the role using MFA and assume that role.
-
-Then set the following environment variables:
-
-```bash
-AWS_ACCESS_KEY_ID=XXX
-AWS_SECRET_ACCESS_KEY=XXX
-AWS_SESSION_TOKEN=XXX
-```
-
-Otherwise, that dataset will just be skipped in the `gen_test_urls.py` script via a try/catch statement.
+You can skip this step if the urls/ directory is already populated and you are not trying to override existing datasets.
 
 ```bash
 mkdir -p urls

@@ -19,3 +19,11 @@ def fetch_and_set_credentials():
         'aws_secret_access_key': credentials['SecretAccessKey'],
         'aws_session_token': credentials['SessionToken']        
     }
+
+if __name__ == "__main__":
+    credentials = fetch_and_set_credentials()
+    print(f"""
+    export AWS_ACCESS_KEY_ID={credentials['aws_access_key_id']}
+    export AWS_SECRET_ACCESS_KEY={credentials['aws_secret_access_key']}
+    export AWS_SESSION_TOKEN={credentials['aws_session_token']}    
+    """)

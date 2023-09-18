@@ -5,21 +5,29 @@ dependencies:
   - python=3.9
   - pip
   - pip:
+    - aiohttp==3.8.0
+    - aiobotocore==2.5.0
+    - awscli
     - boto3
     - carbonplan_data
     - cftime==1.6.2
     - dask
     - fsspec==2023.5.0
     - geojson-pydantic==0.6.2
+    - h5netcdf
     - h5py==3.8.0
     - hvplot
     - holoviews
+    - intake
     - ipykernel==6.23.1
     - jupytext==1.14.7
     - kerchunk==0.1.2
+    - locust
+    - locust_plugins
     - loguru==0.7.0
     - morecantile==3.4.0
     - ndpyramid
+    - numpy
     - papermill==2.4.0
     - Pillow==9.5.0
     - psycopg==3.1.9
@@ -36,3 +44,4 @@ dependencies:
     - titiler
     - xarray==2023.5.0
     - ujson==5.7.0
+    - zarr
