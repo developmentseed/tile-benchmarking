@@ -1,9 +1,6 @@
 name: Run Benchmarks
 
-on:
-  push:
-    branches:
-      - feat/run-benchmarks  # Trigger the workflow on push to the main branch
+on: workflow_dispatch
 
 permissions:
       id-token: write   # This is required for requesting the JWT
