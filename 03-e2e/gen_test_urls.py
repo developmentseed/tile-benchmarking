@@ -113,6 +113,11 @@ for idx, dataset in enumerate(sources.items()):
     reference = value.get("extra_args", {}).get("reference", False)
     multiscale = value.get("extra_args", {}).get("multiscale", False)
     ds = xarray_open_dataset(source, reference=reference)
+    bounds = default_bounds
+    if not multiscale:
+        lat_extent, lon_extent = zarr_helpers.get_lat_lon_extents(ds)
+        bounds = [lon_extent[0], lat_extent[0], lon_extent[1], lat_extent[1]]
+
     array_specs = {
         'collection_name': collection_name,
         'source': source
@@ -133,7 +138,7 @@ for idx, dataset in enumerate(sources.items()):
         query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&url={source}"
         f.write(f"{query_string}\n")
         rows = 0
-        extremas, total_weight = generate_extremas(bounds=value.get("bounds", default_bounds))
+        extremas, total_weight = generate_extremas(bounds=bounds)
         for zoom, start, end in _percentage_split(
             max_url,
             {

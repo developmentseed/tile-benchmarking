@@ -1,6 +1,10 @@
 import boto3
 import pandas as pd
 
+def csv_to_pandas(file_path):
+    df = pd.read_csv(file_path)
+    return df
+
 def load_all_into_dataframe(credentials: dict, s3files: list[str]):
     boto3_session = boto3.Session(**credentials)
     s3_client = boto3_session.client('s3')

@@ -1,4 +1,5 @@
 import xarray as xr
+import math
 import numpy as np
 import s3fs
 import traceback
@@ -14,6 +15,16 @@ def get_number_coord_chunks(ds: xr.Dataset):
         if ds[key].shape != ():
             number_coord_chunks += round(ds[key].shape[0]/ds[key].encoding['chunks'][0])
     return number_coord_chunks
+
+def get_lat_lon_extents(ds: xr.Dataset):
+    lat_values = ds.lat.values
+    lon_values = ds.lon.values
+    if (ds.lon > 180).any():
+        # Adjust the longitude coordinates to the -180 to 180 range
+        lon_values = (ds.lon + 180) % 360 - 180
+    lat_extent= [math.ceil(np.min(lat_values)), math.floor(np.max(lat_values))]
+    lon_extent = [math.ceil(np.min(lon_values)), math.floor(np.max(lon_values))]    
+    return lat_extent, lon_extent
 
 def get_array_chunk_information(ds: xr.Dataset, variable: str, multiscale: bool = False): 
     if multiscale: # TODO
