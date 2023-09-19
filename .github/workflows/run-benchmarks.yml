@@ -38,7 +38,7 @@ jobs:
         mkdir -p results
         for file in urls/*; do
           echo "Running tests for $file"
-          locust -i 1 --urls-file="$file" --csv=results/$(basename ${file%.*})
+          locust -i 10 --urls-file="$file" --csv=results/$(basename ${file%.*})
         done
       shell: micromamba-shell {0}
       working-directory: 03-e2e
@@ -53,7 +53,5 @@ jobs:
     - name: Upload results to S3
       run: |
         current_time=$(date +"%Y-%m-%d_%H-%M-%S")
-        aws s3 rm s3://nasa-eodc-data-store/tile-benchmarking-results/latest/ --recursive
-        aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/latest/ --recursive
         aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/$current_time/ --recursive
       working-directory: 03-e2e
