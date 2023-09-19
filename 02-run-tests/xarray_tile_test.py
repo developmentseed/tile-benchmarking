@@ -18,18 +18,11 @@ class XarrayTileTest(Test):
         else:
             self.multiscale=False
             ds = xarray_open_dataset(self.dataset_url, reference=self.reference)
-
-            lat_values = ds.lat.values
-            lon_values = ds.lon.values
-            if (ds.lon > 180).any():
-                # Adjust the longitude coordinates to the -180 to 180 range
-                lon_values = (ds.lon + 180) % 360 - 180
-            self.lat_extent = [math.ceil(np.min(lat_values)), math.floor(np.max(lat_values))]
-            self.lon_extent = [math.ceil(np.min(lon_values)), math.floor(np.max(lon_values))]
+            self.lat_extent, self.lon_extent = zarr_helpers.get_lat_lon_extents(ds)
             self.number_coordinate_chunks = zarr_helpers.get_number_coord_chunks(ds) 
             da = ds[self.variable]
             self.total_array_size = zarr_helpers.get_dataarray_size(da)
-            chunk_data = zarr_helpers.get_array_chunk_information(da)
+            chunk_data = zarr_helpers.get_array_chunk_information(ds, self.variable)
             for key, value in chunk_data.items():
                 setattr(self, key, value)
             

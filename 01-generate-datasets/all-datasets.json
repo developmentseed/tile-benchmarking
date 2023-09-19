@@ -6,6 +6,18 @@
             "reference": true
         }
     },
+    "600_1440_29_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_29_CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "variable": "tas"
+    },
+    "600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "variable": "tas"
+    },
+    "365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "variable": "tas"
+    },
     "power_901_monthly_meteorology_utc.zarr": {
         "dataset_url": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
         "variable": "TS"
@@ -21,17 +33,35 @@
             "reference": true
         }
     },
-    "600_1440_29_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_29_CMIP6_daily_GISS-E2-1-G_tas.zarr",
-        "variable": "tas"
+    "cmip6-pyramid-reprojected": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/pyramid-reprojected/CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "lat_extent": [
+            -89,
+            89
+        ],
+        "lon_extent": [
+            -179,
+            179
+        ],
+        "variable": "tas",
+        "extra_args": {
+            "multiscale": true
+        }
     },
-    "600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr",
-        "variable": "tas"
-    },
-    "365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr": {
-        "dataset_url": "s3://nasa-eodc-data-store/test-data/cmip6-zarr/365_262_262_CMIP6_daily_GISS-E2-1-G_tas.zarr",
-        "variable": "tas"
+    "cmip6-pyramid-coarsened": {
+        "dataset_url": "s3://nasa-eodc-data-store/test-data/pyramid-coarsened/CMIP6_daily_GISS-E2-1-G_tas.zarr",
+        "lat_extent": [
+            -59,
+            89
+        ],
+        "lon_extent": [
+            -179,
+            179
+        ],
+        "variable": "tas",
+        "extra_args": {
+            "multiscale": true
+        }
     },
     "single_chunk_store_lat1024_lon2048.zarr": {
         "dataset_url": "s3://nasa-eodc-data-store/test-data/fake-data/single_chunk/store_lat1024_lon2048.zarr",

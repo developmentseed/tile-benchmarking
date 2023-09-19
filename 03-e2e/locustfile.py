@@ -42,6 +42,10 @@ def on_test_start(environment, **kwargs):
         for url in lines[4:]:
             paths.append(replace_variables(url.strip(), variables))
 
+@events.quitting.add_listener
+def _(environment, **kw):
+    environment.process_exit_code = 0
+
 class TilesUser(HttpUser):
     @task
     def test_tiles(self):

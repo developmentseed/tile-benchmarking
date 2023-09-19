@@ -1,17 +1,24 @@
 import boto3
 import pandas as pd
 
-def load_all_into_dataframe(credentials: dict, s3files: list[str]):
+def csv_to_pandas(file_path):
+    df = pd.read_csv(file_path)
+    return df
+
+def load_all_into_dataframe(credentials: dict, s3files: list[str], data_format: str = 'json'):
     boto3_session = boto3.Session(**credentials)
     s3_client = boto3_session.client('s3')
     dfs = []
 
     for s3url in s3files:
-        df = pd.read_json(s3url, orient='index').T
+        if data_format == 'json':
+            df = pd.read_json(s3url, orient='index').T
+        else:
+            df = pd.read_csv(s3url)
+        df['s3_url'] = s3url
         dfs.append(df)
  
     merged_df = pd.concat(dfs)
-    #merged_df.set_index('dataset_id', inplace=True)
     return merged_df
 
 def expand_timings(df: pd.DataFrame):

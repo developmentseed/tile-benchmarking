@@ -8,30 +8,23 @@ Tests can be run using [https://locust.io/](https://locust.io/) or [siege](https
 
 ## Environment Setup
 
-```bash
-# It's recommanded to use virtual environment
-cd e2e
-python -m pip install --upgrade virtualenv
-virtualenv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+See README at the root of this repository.
+
+## Set credentials
+
+Scripts reference files in s3://nasa-eodc-data-store and requires data access via a role from the SMCE VEDA AWS account.
+
+YOu can either set environment variables for access yourself or, if logged into the VEDA JupyterHub you can run:
+
 ```
+python helpers/eodc_hub_role.py
+```
+
+and use the output to set credentials.
 
 ## Generating URLs to Test
 
-Note: for the FWI-GEOS-5-Hourly dataset (or any dataset in veda-data-store and veda-data-store-staging), the `gen_test_urls.py` script requires data access via a role from the SMCE VEDA AWS account. Please skip this dataset or contact the SMCE team for access.
-
-If you have role-based access to those buckets, you will need to assume the role using MFA and assume that role.
-
-Then set the following environment variables:
-
-```bash
-AWS_ACCESS_KEY_ID=XXX
-AWS_SECRET_ACCESS_KEY=XXX
-AWS_SESSION_TOKEN=XXX
-```
-
-Otherwise, that dataset will just be skipped in the `gen_test_urls.py` script via a try/catch statement.
+You can skip this step if the urls/ directory is already populated and you are not trying to override existing datasets.
 
 ```bash
 mkdir -p urls
@@ -40,20 +33,20 @@ python gen_test_urls.py
 
 ## Run Locust
 
-```bash
-./run-all.sh
-```
+See [.github/workflows/run-benchmarks.yml](../.github/workflows/run-benchmarks.yml) for an example of how to run locust.
+
+### Read results
+
+[`read-results.ipynb`](./read-results.ipynb) is a Jupyter notebook that reads the results CSV files.
 
 ## Run siege
 
 You can also run tests using siege.
 
 ```bash
-siege -f urls/CMIP6_GISS-E2-1-G_historical_urls.txt -c4 -r25 -l
-siege -f urls/gpm3imergdl_urls.txt -c4 -r25 -l
-# ... so on
+for file in $(find urls -name "*.txt" -type f); do
+  siege -f "$file" --concurrent=4 --reps=10 
+done
+
+siege -f urls/600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr_urls.txt --concurrent=4 --reps=10 -l \ 600_1440_1_CMIP6_daily_GISS-E2-1-G_tas.zarr_urls.txt.out
 ```
-
-## Read results
-
-[`read-results.ipynb`](./read-results.ipynb) is a Jupyter notebook that reads the results CSV files.

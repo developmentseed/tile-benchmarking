@@ -11,7 +11,6 @@ It is the intention of this project that it can also be used to benchmark tiling
 Use the `requirements.txt` or `environment.yaml` to setup a python environment.
 
 ```
-pip install -r requirements.txt
 conda|mamba env create -f environment.yaml
 conda|mamba activate tile-benchmarking
 ```

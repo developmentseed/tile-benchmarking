@@ -1,4 +1,4 @@
-.vscode
+tus.vscode
 
 # Javascript libraries and compiled files
 *.js
@@ -21,3 +21,7 @@ __pycache__
 cdk.context.json
 *.zarr
 *.nc
+
+# ignore results from e2e testing as these should be stored in s3
+03-e2e/downloaded_results
+03-e2e/results
