@@ -16,22 +16,13 @@ sys.path.append('..')
 import helpers.zarr_helpers as zarr_helpers
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, ZarrReader
 
-# Load external data store, cmip6 kerchunk data store, and cmip6 zarr data stores
-files = [
-    '../01-generate-datasets/external-datasets.json',
-    '../01-generate-datasets/cmip6-zarr-datasets.json',
-    '../01-generate-datasets/cmip6-kerchunk-dataset.json',
-]
-
-with open(files[0], "r") as f1, \
-     open(files[1], "r") as f2, \
-     open(files[2], "r") as f3:
-    dict1 = json.load(f1)
-    dict2 = json.load(f2)
-    dict3 = json.load(f3)
-
 # Step 2: Merge the dictionaries
-sources = {**dict1, **dict2, **dict3}
+sources = json.loads(open('../01-generate-datasets/all-datasets.json', 'r').read())
+
+# remove pyramids and https dataset for now
+sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
+# Also, skip HTTPS for now
+sources = list(filter(lambda x: 'https' not in x[1]['dataset_url'], sources))
 
 def _percentage_split(size, percentages):
     """Freely copied from TileSiege https://github.com/bdon/TileSiege"""
@@ -105,7 +96,7 @@ def generate_extremas(bounds: list[float]):
 # Prepare the CSV file
 csv_file = "zarr_info.csv"
 
-for idx, dataset in enumerate(sources.items()):
+for idx, dataset in enumerate(sources):
     key, value = dataset
     collection_name = key
     source = value['dataset_url']

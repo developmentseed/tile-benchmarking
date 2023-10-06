@@ -35,7 +35,7 @@ jobs:
         mkdir -p results
         for file in urls/*; do
           echo "Running tests for $file"
-          locust -i 10 --urls-file="$file" --csv=results/$(basename ${file%.*})
+          locust -i 10 --urls-file="$file" --csv=results/$(basename ${file%.*}) --csv-full-history
         done
       shell: micromamba-shell {0}
       working-directory: 03-e2e
