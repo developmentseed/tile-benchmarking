@@ -48,7 +48,7 @@ tms = morecantile.tms.get("WebMercatorQuad")
 
 minzoom = 0
 maxzoom = 6
-max_url = 100
+max_url = 30
 default_bounds = [-180, -90, 180, 90]
 
 ""
