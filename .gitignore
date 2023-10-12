@@ -25,3 +25,5 @@ cdk.context.json
 # ignore results from e2e testing as these should be stored in s3
 03-e2e/downloaded_results
 03-e2e/results
+03-e2e/urls
+*cache*

@@ -9,15 +9,19 @@ permissions:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        environment: ['dev', 'prod']
     steps:
     - name: Git clone the repository
       uses: actions/checkout@v3
-  
-    - name: Set up Python ${{ matrix.python-version }}
+      with:
+        submodules: recursive      
+
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.10'
 
     - name: Setup micromamba
       uses: mamba-org/setup-micromamba@v1
@@ -30,22 +34,29 @@ jobs:
         cache-environment: true
         post-cleanup: 'all'
 
-    - name: Run locust on files in urls/ directory and store results in results/
-      run: |
-        mkdir -p results
-        for file in urls/*; do
-          echo "Running tests for $file"
-          locust -i 10 --urls-file="$file" --csv=results/$(basename ${file%.*}) --csv-full-history
-        done
-      shell: micromamba-shell {0}
-      working-directory: 03-e2e
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: arn:aws:iam::444055461661:role/github-actions-role-eodc
         role-session-name: samplerolesession
         aws-region: us-west-2
+
+    - name: Generate URLs for ${{ matrix.environment }}
+      run: |
+        mkdir -p urls
+        python gen_test_urls.py --env ${{ matrix.environment }}
+      shell: micromamba-shell {0}
+      working-directory: 03-e2e
+
+    - name: Run locust for ${{ matrix.environment }} and store results in results/
+      run: |
+        mkdir -p results
+        for file in urls/*; do
+          echo "Running tests for $file"
+          locust -i 5 --urls-file="$file" --csv=results/$(basename ${file%.*})
+        done
+      shell: micromamba-shell {0}
+      working-directory: 03-e2e
 
     - name: Upload results to S3
       run: |

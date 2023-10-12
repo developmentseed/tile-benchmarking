@@ -3,6 +3,7 @@ import math
 import numpy as np
 import s3fs
 import traceback
+import sys; sys.path.append('..')
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, ZarrReader
 
 def get_dataarray_size(da: xr.DataArray):
