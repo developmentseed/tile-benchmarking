@@ -19,7 +19,8 @@ jobs:
       # Update references
     - name: Git Sumbodule Update
       run: |
-        git submodule update
+        git pull --recurse-submodules
+        git submodule update --remote --recursive
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
