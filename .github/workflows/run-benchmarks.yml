@@ -15,12 +15,8 @@ jobs:
     steps:
     - name: Git clone the repository
       uses: actions/checkout@v3
-  
-      # Update references
-    - name: Git Sumbodule Update
-      run: |
-        git pull --recurse-submodules
-        git submodule update --remote --recursive
+      with:
+        submodules: recursive      
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
