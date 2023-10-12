@@ -23,6 +23,8 @@ jobs:
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
     steps:
+    - name: Git clone the repository
+      uses: actions/checkout@v3    
     - name: Check commit message
       id: check
       run: |
@@ -38,8 +40,6 @@ jobs:
     if: needs.check_commit.outputs.should_run == 'true' 
     runs-on: ubuntu-latest
     steps:
-      - name: Git clone the repository
-        uses: actions/checkout@v3
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
