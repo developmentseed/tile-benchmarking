@@ -34,6 +34,13 @@ jobs:
         cache-environment: true
         post-cleanup: 'all'
 
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::444055461661:role/github-actions-role-eodc
+        role-session-name: samplerolesession
+        aws-region: us-west-2
+
     - name: Generate URLs for ${{ matrix.environment }}
       run: |
         mkdir -p urls
@@ -50,13 +57,6 @@ jobs:
         done
       shell: micromamba-shell {0}
       working-directory: 03-e2e
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        role-to-assume: arn:aws:iam::444055461661:role/github-actions-role-eodc
-        role-session-name: samplerolesession
-        aws-region: us-west-2
 
     - name: Upload results to S3
       run: |
