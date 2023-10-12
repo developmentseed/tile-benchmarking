@@ -28,12 +28,14 @@ You can skip this step if the urls/ directory is already populated and you are n
 
 ```bash
 mkdir -p urls
-python gen_test_urls.py
+python gen_test_urls.py --env prod|dev
 ```
 
 ## Run Locust
 
 See [.github/workflows/run-benchmarks.yml](../.github/workflows/run-benchmarks.yml) for an example of how to run locust.
+
+The workflow runs for both prod and dev so results can be compared, as demonstrated in [compare-prod-dev.ipynb](./compare-prod-dev.ipynb).
 
 ### Read results
 
