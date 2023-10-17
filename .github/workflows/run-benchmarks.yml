@@ -53,7 +53,7 @@ jobs:
         mkdir -p results
         for file in urls/*; do
           echo "Running tests for $file"
-          locust -i 1 --urls-file="$file" --csv=results/$(basename ${file%.*}) --host=https://${{ matrix.environment }}-titiler-xarray.delta-backend.com
+          locust -i 3 --urls-file="$file" --csv=results/$(basename ${file%.*}) --host=https://${{ matrix.environment }}-titiler-xarray.delta-backend.com
         done
       shell: micromamba-shell {0}
       working-directory: 03-e2e
