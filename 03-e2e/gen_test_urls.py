@@ -119,18 +119,28 @@ if __name__ == "__main__":
         reference = value.get("extra_args", {}).get("reference", False)
         multiscale = value.get("extra_args", {}).get("multiscale", False)
         consolidated = value.get("extra_args", {}).get("consolidated", True)
-        ds = xarray_open_dataset(source, reference=reference, consolidated=consolidated)
-        bounds = default_bounds
-        if not multiscale:
-            da = get_variable(ds, variable=variable)
-            lat_extent, lon_extent = zarr_helpers.get_lat_lon_extents(da)
-            bounds = [lon_extent[0], lat_extent[0], lon_extent[1], lat_extent[1]]
-
+        # some datasets will only be accessible via a special role the titiler-xarray lambda has
+        protected = value.get("extra_args", {}).get("protected", False)
         array_specs = {
             'collection_name': collection_name,
-            'source': source
-        }
-        array_specs.update(zarr_helpers.get_array_chunk_information(da, multiscale=multiscale))
+            'source': source,
+            'chunks': 'N/A',
+            'shape_dict': 'N/A',
+            'dtype': 'N/A',
+            'chunk_size_mb': 'N/A',
+            'compression': 'N/A',
+            'number_of_spatial_chunks': 'N/A',
+            'number_coordinate_chunks': 'N/A'
+        }        
+        if not protected:
+            ds = xarray_open_dataset(source, reference=reference, consolidated=consolidated)
+            bounds = default_bounds
+            if not multiscale:
+                da = get_variable(ds, variable=variable)
+                lat_extent, lon_extent = zarr_helpers.get_lat_lon_extents(da)
+                bounds = [lon_extent[0], lat_extent[0], lon_extent[1], lat_extent[1]]
+            array_specs.update(zarr_helpers.get_array_chunk_information(da, multiscale=multiscale))
+
         mode = "w" if idx == 0 else "a"
         with open(csv_file, mode, newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=array_specs.keys())
