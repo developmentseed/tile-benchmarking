@@ -149,7 +149,7 @@ if __name__ == "__main__":
             writer.writerow(array_specs)
             csvfile.close()
 
-        with open(f"{args.env}_urls/{collection_name}_urls.txt", "w") as f:
+        with open(f"urls/{collection_name}_urls.txt", "w") as f:
             f.write(f"HOST={HOST}\n")
             f.write("PATH=tiles/\n")
             f.write("EXT=.png\n")
