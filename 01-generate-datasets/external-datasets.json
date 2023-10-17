@@ -9,6 +9,13 @@
         "dataset_url": "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json",
         "variable": "sst",
         "extra_args": {"reference": true }
+    }, "prod-giovanni-cache-GPM_3IMERGHH_06_precipitationCal": {
+        "dataset_url": "s3://prod-giovanni-cache/zarr/GPM_3IMERGHH_06_precipitationCal/",
+        "variable": "variable",
+        "extra_args": { "consolidated": false, "protected": true }
+    }, "pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc": {
+        "dataset_url": "https://nex-gddp-cmip6.s3-us-west-2.amazonaws.com/NEX-GDDP-CMIP6/ACCESS-CM2/historical/r1i1p1f1/pr/pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc",
+        "variable": "pr"
     }
 }
 

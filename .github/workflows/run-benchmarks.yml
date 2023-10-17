@@ -43,17 +43,18 @@ jobs:
 
     - name: Generate URLs for ${{ matrix.environment }}
       run: |
-        mkdir -p urls
+        mkdir -p ${{ matrix.environment }}_urls
         python gen_test_urls.py --env ${{ matrix.environment }}
       shell: micromamba-shell {0}
       working-directory: 03-e2e
 
     - name: Run locust for ${{ matrix.environment }} and store results in results/
       run: |
-        mkdir -p results
-        for file in urls/*; do
+        mkdir -p ${{ matrix.environment }}_results
+        for file in ${{ matrix.environment }}_urls/*; do
           echo "Running tests for $file"
-          locust -i 5 --urls-file="$file" --csv=results/$(basename ${file%.*})
+          cat $file
+          locust -i 1 --urls-file="$file" --csv=${{ matrix.environment }}_results/$(basename ${file%.*})
         done
       shell: micromamba-shell {0}
       working-directory: 03-e2e
@@ -61,5 +62,5 @@ jobs:
     - name: Upload results to S3
       run: |
         current_time=$(date +"%Y-%m-%d_%H-%M-%S")
-        aws s3 cp results/ s3://nasa-eodc-data-store/tile-benchmarking-results/$current_time/ --recursive
+        aws s3 cp ${{ matrix.environment }}_results/ s3://nasa-eodc-data-store/tile-benchmarking-results/$current_time/ --recursive
       working-directory: 03-e2e

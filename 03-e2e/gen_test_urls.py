@@ -15,15 +15,13 @@ import os
 import sys
 sys.path.append('..')
 import helpers.zarr_helpers as zarr_helpers
-from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, ZarrReader
+from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, get_variable
 
 # Step 2: Merge the dictionaries
-sources = json.loads(open('../01-generate-datasets/all-datasets.json', 'r').read())
+sources = json.loads(open('../01-generate-datasets/external-datasets.json', 'r').read())
 
 # remove pyramids and https dataset for now
 sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
-# Also, skip HTTPS for now
-sources = list(filter(lambda x: 'https' not in x[1]['dataset_url'], sources))
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="Set environment for the script.")
@@ -108,7 +106,7 @@ if __name__ == "__main__":
     elif args.env == "prod":
         HOST = "https://prod-titiler-xarray.delta-backend.com"
     
-    print(f"Running script on HOST: {HOST}")
+    print(f"Running script for HOST: {HOST}")
     
     # Prepare the CSV file
     csv_file = "zarr_info.csv"
@@ -120,17 +118,29 @@ if __name__ == "__main__":
         variable = value["variable"]
         reference = value.get("extra_args", {}).get("reference", False)
         multiscale = value.get("extra_args", {}).get("multiscale", False)
-        ds = xarray_open_dataset(source, reference=reference)
-        bounds = default_bounds
-        if not multiscale:
-            lat_extent, lon_extent = zarr_helpers.get_lat_lon_extents(ds)
-            bounds = [lon_extent[0], lat_extent[0], lon_extent[1], lat_extent[1]]
-
+        consolidated = value.get("extra_args", {}).get("consolidated", True)
+        # some datasets will only be accessible via a special role the titiler-xarray lambda has
+        protected = value.get("extra_args", {}).get("protected", False)
         array_specs = {
             'collection_name': collection_name,
-            'source': source
-        }
-        array_specs.update(zarr_helpers.get_array_chunk_information(ds, variable=variable, multiscale=multiscale))
+            'source': source,
+            'chunks': 'N/A',
+            'shape_dict': 'N/A',
+            'dtype': 'N/A',
+            'chunk_size_mb': 'N/A',
+            'compression': 'N/A',
+            'number_of_spatial_chunks': 'N/A',
+            'number_coordinate_chunks': 'N/A'
+        }        
+        if not protected:
+            ds = xarray_open_dataset(source, reference=reference, consolidated=consolidated)
+            bounds = default_bounds
+            if not multiscale:
+                da = get_variable(ds, variable=variable)
+                lat_extent, lon_extent = zarr_helpers.get_lat_lon_extents(da)
+                bounds = [lon_extent[0], lat_extent[0], lon_extent[1], lat_extent[1]]
+            array_specs.update(zarr_helpers.get_array_chunk_information(da, multiscale=multiscale))
+
         mode = "w" if idx == 0 else "a"
         with open(csv_file, mode, newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=array_specs.keys())
@@ -139,11 +149,11 @@ if __name__ == "__main__":
             writer.writerow(array_specs)
             csvfile.close()
 
-        with open(f"urls/{collection_name}_urls.txt", "w") as f:
+        with open(f"{args.env}_urls/{collection_name}_urls.txt", "w") as f:
             f.write(f"HOST={HOST}\n")
             f.write("PATH=tiles/\n")
             f.write("EXT=.png\n")
-            query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&url={source}"
+            query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&url={source}&consolidated={consolidated}"
             f.write(f"{query_string}\n")
             rows = 0
             extremas, total_weight = generate_extremas(bounds=bounds)

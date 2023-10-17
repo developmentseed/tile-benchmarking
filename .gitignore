@@ -27,3 +27,5 @@ cdk.context.json
 03-e2e/results
 03-e2e/urls
 *cache*
+downloaded_dev_results
+downloaded_prod_results
