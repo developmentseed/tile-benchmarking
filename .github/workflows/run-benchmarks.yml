@@ -53,7 +53,8 @@ jobs:
         mkdir -p results
         for file in ${{ matrix.environment }}_urls/*; do
           echo "Running tests for $file"
-          locust -i 5 --urls-file="$file" --csv=results/$(basename ${file%.*})
+          cat $file
+          locust -i 1 --urls-file="$file" --csv=results/$(basename ${file%.*})
         done
       shell: micromamba-shell {0}
       working-directory: 03-e2e
