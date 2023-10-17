@@ -106,7 +106,7 @@ if __name__ == "__main__":
     elif args.env == "prod":
         HOST = "https://prod-titiler-xarray.delta-backend.com"
     
-    print(f"Running script on HOST: {HOST}")
+    print(f"Running script for HOST: {HOST}")
     
     # Prepare the CSV file
     csv_file = "zarr_info.csv"
@@ -149,11 +149,11 @@ if __name__ == "__main__":
             writer.writerow(array_specs)
             csvfile.close()
 
-        with open(f"urls/{collection_name}_urls.txt", "w") as f:
+        with open(f"{args.env}_urls/{collection_name}_urls.txt", "w") as f:
             f.write(f"HOST={HOST}\n")
             f.write("PATH=tiles/\n")
             f.write("EXT=.png\n")
-            query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&url={source}"
+            query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&url={source}&consolidated={consolidated}"
             f.write(f"{query_string}\n")
             rows = 0
             extremas, total_weight = generate_extremas(bounds=bounds)

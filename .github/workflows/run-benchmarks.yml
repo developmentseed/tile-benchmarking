@@ -51,7 +51,7 @@ jobs:
     - name: Run locust for ${{ matrix.environment }} and store results in results/
       run: |
         mkdir -p results
-        for file in urls/*; do
+        for file in ${{ matrix.environment }}_urls/*; do
           echo "Running tests for $file"
           locust -i 5 --urls-file="$file" --csv=results/$(basename ${file%.*})
         done
