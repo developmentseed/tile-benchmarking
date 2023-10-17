@@ -10,35 +10,35 @@ def get_dataarray_size(da: xr.DataArray):
     dtype = da.encoding.get("dtype", "N/A")
     return np.prod(da.shape) * dtype.itemsize/1024/1024
 
-def get_number_coord_chunks(ds: xr.Dataset):
+def get_number_coord_chunks(da: xr.DataArray):
     number_coord_chunks = 0
-    for key in ds.coords.keys():
-        if ds[key].shape != ():
-            number_coord_chunks += round(ds[key].shape[0]/ds[key].encoding['chunks'][0])
+    for key in da.coords.keys():
+        if da[key].shape != () and da[key].encoding.get('chunks'):
+            number_coord_chunks += round(da[key].shape[0]/da[key].encoding['chunks'][0])
     return number_coord_chunks
 
-def get_lat_lon_extents(ds: xr.Dataset):
-    lat_values = ds.lat.values
-    lon_values = ds.lon.values
-    if (ds.lon > 180).any():
-        # Adjust the longitude coordinates to the -180 to 180 range
-        lon_values = (ds.lon + 180) % 360 - 180
+def get_lat_lon_extents(da: xr.DataArray):
+    lat_values = da.y.values
+    lon_values = da.x.values
     lat_extent= [math.ceil(np.min(lat_values)), math.floor(np.max(lat_values))]
     lon_extent = [math.ceil(np.min(lon_values)), math.floor(np.max(lon_values))]    
     return lat_extent, lon_extent
 
-def get_array_chunk_information(ds: xr.Dataset, variable: str, multiscale: bool = False): 
+def get_array_chunk_information(da: xr.DataArray, multiscale: bool = False): 
     if multiscale: # TODO
         chunks, shape_dict, chunks_dict, dtype, chunk_size_mb, compression, number_of_spatial_chunks = ["N/A"] * 7
     else:
-        da = ds[variable]
         chunks = da.encoding.get("chunks", "N/A")
         chunks_dict = dict(zip(da.dims, chunks))
         shape_dict = dict(zip(da.dims, da.shape))
-        dtype = da.encoding.get("dtype", "N/A")    
-        chunk_size_mb = "N/A" if chunks is None else (np.prod(chunks) * dtype.itemsize)/1024/1024
+        dtype = da.encoding.get("dtype", "N/A")
+        # import pdb; pdb.set_trace()
+        chunk_size_mb = "N/A" if chunks == 'N/A' else (np.prod(chunks) * dtype.itemsize)/1024/1024
         compression = da.encoding.get("compressor", "N/A")
-        number_of_spatial_chunks = (shape_dict['lat']/chunks_dict['lat']) * (shape_dict['lon']/chunks_dict['lon'])
+        try:
+            number_of_spatial_chunks = (shape_dict['y']/chunks_dict['y']) * (shape_dict['x']/chunks_dict['x'])
+        except:
+            number_of_spatial_chunks = "N/A"
     return {
         'chunks': chunks_dict,
         'shape_dict': shape_dict,
@@ -46,7 +46,7 @@ def get_array_chunk_information(ds: xr.Dataset, variable: str, multiscale: bool 
         'chunk_size_mb': chunk_size_mb,
         'compression': str(compression),
         'number_of_spatial_chunks': number_of_spatial_chunks,
-        'number_coordinate_chunks': get_number_coord_chunks(ds)
+        'number_coordinate_chunks': get_number_coord_chunks(da)
     }
 
 def generate_data_store(
