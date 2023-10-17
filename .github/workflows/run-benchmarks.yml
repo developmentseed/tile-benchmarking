@@ -43,7 +43,7 @@ jobs:
 
     - name: Generate URLs for ${{ matrix.environment }}
       run: |
-        mkdir -p urls
+        mkdir -p ${{ matrix.environment }}_urls
         python gen_test_urls.py --env ${{ matrix.environment }}
       shell: micromamba-shell {0}
       working-directory: 03-e2e
