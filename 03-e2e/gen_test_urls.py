@@ -25,7 +25,7 @@ sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="Set environment for the script.")
-    parser.add_argument("--env", choices=["dev", "prod"], default="dev", help="Environment to run the script in. Options are 'dev' and 'prod'. Default is 'dev'.")
+    parser.add_argument("--env", default="dev", help="Environment to run the script in. Options are 'dev' and 'prod'. Default is 'dev'.")
     args = parser.parse_args()
     return args
 
