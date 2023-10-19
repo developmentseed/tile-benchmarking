@@ -101,10 +101,7 @@ def generate_extremas(bounds: list[float]):
 if __name__ == "__main__":
     args = get_arguments()
     
-    if args.env == "dev":
-        HOST = "https://dev-titiler-xarray.delta-backend.com"
-    elif args.env == "prod":
-        HOST = "https://prod-titiler-xarray.delta-backend.com"
+    HOST = f"https://{args.env}-titiler-xarray.delta-backend.com"
     
     print(f"Running script for HOST: {HOST}")
     
