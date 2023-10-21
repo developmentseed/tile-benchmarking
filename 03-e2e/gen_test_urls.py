@@ -18,14 +18,14 @@ import helpers.zarr_helpers as zarr_helpers
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, get_variable
 
 # Step 2: Merge the dictionaries
-sources = json.loads(open('../01-generate-datasets/external-datasets.json', 'r').read())
+sources = json.loads(open('../01-generate-datasets/all-datasets.json', 'r').read())
 
 # remove pyramids and https dataset for now
 sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="Set environment for the script.")
-    parser.add_argument("--env", choices=["dev", "prod"], default="dev", help="Environment to run the script in. Options are 'dev' and 'prod'. Default is 'dev'.")
+    parser.add_argument("--env", default="dev", help="Environment to run the script in. Options are 'dev' and 'prod'. Default is 'dev'.")
     args = parser.parse_args()
     return args
 
@@ -101,10 +101,7 @@ def generate_extremas(bounds: list[float]):
 if __name__ == "__main__":
     args = get_arguments()
     
-    if args.env == "dev":
-        HOST = "https://dev-titiler-xarray.delta-backend.com"
-    elif args.env == "prod":
-        HOST = "https://prod-titiler-xarray.delta-backend.com"
+    HOST = f"https://{args.env}-titiler-xarray.delta-backend.com"
     
     print(f"Running script for HOST: {HOST}")
     
@@ -149,7 +146,7 @@ if __name__ == "__main__":
             writer.writerow(array_specs)
             csvfile.close()
 
-        with open(f"{args.env}_urls/{collection_name}_urls.txt", "w") as f:
+        with open(f"urls/{collection_name}_urls.txt", "w") as f:
             f.write(f"HOST={HOST}\n")
             f.write("PATH=tiles/\n")
             f.write("EXT=.png\n")
