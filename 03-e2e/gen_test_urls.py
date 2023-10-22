@@ -18,7 +18,7 @@ import helpers.zarr_helpers as zarr_helpers
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, get_variable
 
 # Step 2: Merge the dictionaries
-sources = json.loads(open('../01-generate-datasets/all-datasets.json', 'r').read())
+sources = json.loads(open('../01-generate-datasets/external-datasets.json', 'r').read())
 
 # remove pyramids and https dataset for now
 sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
@@ -26,6 +26,7 @@ sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
 def get_arguments():
     parser = argparse.ArgumentParser(description="Set environment for the script.")
     parser.add_argument("--env", default="dev", help="Environment to run the script in. Options are 'dev' and 'prod'. Default is 'dev'.")
+    parser.add_argument("--numurls", default=30, help="Number of URLs to generate", type=int)    
     args = parser.parse_args()
     return args
 
@@ -46,7 +47,6 @@ tms = morecantile.tms.get("WebMercatorQuad")
 
 minzoom = 0
 maxzoom = 6
-max_url = 30
 default_bounds = [-180, -90, 180, 90]
 
 ""
@@ -102,6 +102,7 @@ if __name__ == "__main__":
     args = get_arguments()
     
     HOST = f"https://{args.env}-titiler-xarray.delta-backend.com"
+    numurls = args.numurls
     
     print(f"Running script for HOST: {HOST}")
     
@@ -155,7 +156,7 @@ if __name__ == "__main__":
             rows = 0
             extremas, total_weight = generate_extremas(bounds=bounds)
             for zoom, start, end in _percentage_split(
-                max_url,
+                numurls,
                 {
                     zoom: distribution[zoom] / total_weight
                     for zoom in range(minzoom, maxzoom + 1)
