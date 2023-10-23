@@ -18,7 +18,7 @@ import helpers.zarr_helpers as zarr_helpers
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, get_variable
 
 # Step 2: Merge the dictionaries
-sources = json.loads(open('../01-generate-datasets/fake-datasets.json', 'r').read())
+sources = json.loads(open('../01-generate-datasets/external-datasets.json', 'r').read())
 
 # remove pyramids and https dataset for now
 sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
