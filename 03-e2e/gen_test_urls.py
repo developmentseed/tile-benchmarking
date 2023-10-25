@@ -17,16 +17,11 @@ sys.path.append('..')
 import helpers.zarr_helpers as zarr_helpers
 from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, get_variable
 
-# Step 2: Merge the dictionaries
-sources = json.loads(open('../01-generate-datasets/fake-datasets.json', 'r').read())
-
-# remove pyramids and https dataset for now
-sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))
-
 def get_arguments():
     parser = argparse.ArgumentParser(description="Set environment for the script.")
     parser.add_argument("--env", default="dev", help="Environment to run the script in. Options are 'dev' and 'prod'. Default is 'dev'.")
-    parser.add_argument("--numurls", default=30, help="Number of URLs to generate", type=int)    
+    parser.add_argument("--numurls", default=30, help="Number of URLs to generate", type=int)
+    parser.add_argument("--datasets", default="external", help="Which tests datasets to load", type=str)
     args = parser.parse_args()
     return args
 
@@ -100,6 +95,12 @@ def generate_extremas(bounds: list[float]):
 
 if __name__ == "__main__":
     args = get_arguments()
+    
+    # Step 2: Merge the dictionaries
+    sources = json.loads(open(f'../01-generate-datasets/{args.datasets}-datasets.json', 'r').read())
+
+    # remove pyramids and https dataset for now
+    sources = list(filter(lambda x: 'pyramid' not in x[0], sources.items()))    
     
     HOST = f"https://{args.env}-titiler-xarray.delta-backend.com"
     numurls = args.numurls
