@@ -93,7 +93,7 @@ def generate_extremas(bounds: list[float]):
         }
     return extremas, total_weight
 
-if __name__ == "__main__":
+def main(args=None):
     args = get_arguments()
     
     # Step 2: Merge the dictionaries
@@ -178,3 +178,6 @@ if __name__ == "__main__":
                     p2 = " " * (len(str(10000)) - len(str(rows_for_zoom)))
                     bar = "█" * math.ceil(rows_for_zoom / max_url * 60)
                     click.echo(f"{p1}{zoom} | {p2}{rows_for_zoom} {bar}", err=True)
+
+if __name__ == "__main__":
+    main()
