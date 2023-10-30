@@ -118,6 +118,7 @@ def main(args=None):
         reference = value.get("extra_args", {}).get("reference", False)
         multiscale = value.get("extra_args", {}).get("multiscale", False)
         consolidated = value.get("extra_args", {}).get("consolidated", True)
+        drop_dim = value.get("extra_args", {}).get("drop_dim", None)
         # some datasets will only be accessible via a special role the titiler-xarray lambda has
         protected = value.get("extra_args", {}).get("protected", False)
         array_specs = {
@@ -135,7 +136,7 @@ def main(args=None):
             ds = xarray_open_dataset(source, reference=reference, consolidated=consolidated)
             bounds = default_bounds
             if not multiscale:
-                da = get_variable(ds, variable=variable)
+                da = get_variable(ds, variable=variable, drop_dim=drop_dim)
                 lat_extent, lon_extent = zarr_helpers.get_lat_lon_extents(da)
                 bounds = [lon_extent[0], lat_extent[0], lon_extent[1], lat_extent[1]]
             array_specs.update(zarr_helpers.get_array_chunk_information(da, multiscale=multiscale))
@@ -153,6 +154,11 @@ def main(args=None):
             f.write("PATH=tiles/\n")
             f.write("EXT=.png\n")
             query_string = f"QUERYSTRING=?reference={reference}&variable={variable}&url={source}&consolidated={consolidated}"
+            if protected:
+                query_string += "&anon=false"
+            if drop_dim:
+                query_string += f"&drop_dim={drop_dim}"
+
             f.write(f"{query_string}\n")
             rows = 0
             extremas, total_weight = generate_extremas(bounds=bounds)
