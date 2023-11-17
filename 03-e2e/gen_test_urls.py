@@ -121,6 +121,7 @@ def main(args=None):
         drop_dim = value.get("extra_args", {}).get("drop_dim", None)
         # some datasets will only be accessible via a special role the titiler-xarray lambda has
         protected = value.get("extra_args", {}).get("protected", False)
+        bounds = value.get("extra_args", {}).get("bounds", default_bounds)
         array_specs = {
             'collection_name': collection_name,
             'source': source,
@@ -134,7 +135,6 @@ def main(args=None):
         }        
         if not protected:
             ds = xarray_open_dataset(source, reference=reference, consolidated=consolidated)
-            bounds = default_bounds
             if not multiscale:
                 da = get_variable(ds, variable=variable, drop_dim=drop_dim)
                 lat_extent, lon_extent = zarr_helpers.get_lat_lon_extents(da)

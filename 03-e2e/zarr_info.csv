@@ -1,6 +1,9 @@
 collection_name,source,chunks,shape_dict,dtype,chunk_size_mb,compression,number_of_spatial_chunks,number_coordinate_chunks
 power_901_monthly_meteorology_utc.zarr,s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr,"{'y': 504, 'x': 25}","{'y': 361, 'x': 576}",float64,2.40325927734375,"Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)",16.502857142857142,2
 cmip6-pds_GISS-E2-1-G_historical_tas,s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/,"{'y': 600, 'x': 90}","{'y': 90, 'x': 144}",float32,29.6630859375,"Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)",0.24,1
-aws-noaa-oisst-feedstock_reference,https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json,"{'y': 1, 'x': 1}","{'y': 720, 'x': 1440}",int16,1.9775390625,Zlib(level=4),1036800.0,1
 pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc,https://nex-gddp-cmip6.s3-us-west-2.amazonaws.com/NEX-GDDP-CMIP6/ACCESS-CM2/historical/r1i1p1f1/pr/pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc,"{'y': 'N', 'x': '/'}","{'y': 600, 'x': 1440}",float32,N/A,N/A,N/A,0
+20231107090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc,s3://podaac-ops-cumulus-protected/MUR-JPL-L4-GLOB-v4.1/20231107090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc,N/A,N/A,N/A,N/A,N/A,N/A,N/A
 GLDAS_NOAH025_3H.A20230731.2100.021.nc4,s3://gesdisc-cumulus-prod-protected/GLDAS/GLDAS_NOAH025_3H.2.1/2023/212/GLDAS_NOAH025_3H.A20230731.2100.021.nc4,N/A,N/A,N/A,N/A,N/A,N/A,N/A
+combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json,s3://veda-data-store-staging/cmip6-GISS-E2-1-G-tas-kerchunk/combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json,"{'y': 1, 'x': 600}","{'y': 600, 'x': 1440}",float32,3.2958984375,Zlib(level=5),1440.0,1
+3B-DAY.MS.MRG.3IMERG.20000601-S000000-E235959.V07.nc4,s3://gesdisc-cumulus-prod-protected/GPM_L3/GPM_3IMERGDF.07/2000/06/3B-DAY.MS.MRG.3IMERG.20000601-S000000-E235959.V07.nc4,N/A,N/A,N/A,N/A,N/A,N/A,N/A
+3B42_Daily.19980101.7.nc4,s3://gesdisc-cumulus-prod-protected/TRMM_L3/TRMM_3B42_Daily.7/1998/01/3B42_Daily.19980101.7.nc4,N/A,N/A,N/A,N/A,N/A,N/A,N/A
