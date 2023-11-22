@@ -20,7 +20,7 @@ from titiler_xarray.titiler.xarray.reader import xarray_open_dataset, get_variab
 def get_arguments():
     parser = argparse.ArgumentParser(description="Set environment for the script.")
     parser.add_argument("--env", default="dev", help="Environment to run the script in. Options are 'dev' and 'prod'. Default is 'dev'.")
-    parser.add_argument("--numurls", default=30, help="Number of URLs to generate", type=int)
+    parser.add_argument("--numurls", default=10, help="Number of URLs to generate", type=int)
     parser.add_argument("--datasets", default="external", help="Which tests datasets to load", type=str)
     args = parser.parse_args()
     return args

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: ['dev', 'feature', 'feature2']
+        environment: ['prod', 'dev']
     steps:
     - name: Git clone the repository
       uses: actions/checkout@v3
