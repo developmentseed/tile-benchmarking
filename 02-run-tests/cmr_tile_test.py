@@ -1,6 +1,7 @@
 from test import Test, timer_decorator
 from titiler.cmr.backend import CMRBackend
 from titiler.cmr.reader import ZarrReader
+from titiler.cmr import __version__ as titiler_cmr_version
 from rio_tiler.models import ImageData
 
 
@@ -28,6 +29,7 @@ class CMRTileTest(Test):
         super().__init__(**kwargs)
         self.cmr_query = cmr_query
         self.reader_options = {"variable": self.variable}
+        self.titiler_cmr_version = titiler_cmr_version
 
     def generate_arguments(self, batch_size: int = 1, zoom: int = 0):
         return [self.generate_random_tile(zoom) for i in range(batch_size)]
