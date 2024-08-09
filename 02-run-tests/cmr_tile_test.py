@@ -1,4 +1,4 @@
-from test import Test, timer_decorator
+from tile_test import Test, timer_decorator
 from titiler.cmr.backend import CMRBackend
 from titiler.cmr.reader import ZarrReader
 from titiler.cmr import __version__ as titiler_cmr_version
