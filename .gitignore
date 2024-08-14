@@ -28,3 +28,6 @@ cdk.context.json
 03-e2e/urls
 *cache*
 downloaded*results
+
+04-cmr-load-tests/results
+04-cmr-load-tests/urls
