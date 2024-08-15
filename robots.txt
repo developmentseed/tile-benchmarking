@@ -1,0 +1,1 @@
+Sitemap: https://developmentseed.org/tile-benchmarking/sitemap.xml

@@ -1,0 +1,2852 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.56">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Create Zarr Stores with Different Chunk Shapes – Tile Benchmarking</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../01-generate-datasets/generate-fake-data-with-chunks.html" rel="next">
+<link href="../01-generate-datasets/generate-cmip6-pyramid.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar docked">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../01-generate-datasets/generate-cmip6-kerchunk.html">Dataset preparation</a></li><li class="breadcrumb-item"><a href="../01-generate-datasets/generate-cmip6-zarr.html">Create Zarr Stores with Different Chunk Shapes</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Tile Benchmarking</a> 
+        <div class="sidebar-tools-main">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Dataset preparation</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-generate-datasets/generate-cmip6-kerchunk.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Generate Kerchunk Reference from CMIP6 NetCDF files</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-generate-datasets/generate-cmip6-pyramid.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Create Zarr Pyramid</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-generate-datasets/generate-cmip6-zarr.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Create Zarr Stores with Different Chunk Shapes</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-generate-datasets/generate-fake-data-with-chunks.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Generate fake data</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Tile Generation</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-run-tests/01-cog-gdal-tests.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Tile Generation Benchmarks for COGs with GDAL Environment Variables</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-run-tests/02-cog-kerchunk-zarr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Tile Generation Benchmarks across Data Formats</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-run-tests/03-chunk-size.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Tile Generation Benchmarks for Varied Chunk Sizes</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-run-tests/04-number-of-spatial-chunks.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Tile Generation Benchmarks for Spatial Chunk Variations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-run-tests/05-cmip6-pyramid.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Tile Generation Benchmarks for a Zarr Pyramid</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-run-tests/06-cmr-netcdf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Tile Generation Benchmarks using CMR</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Load testing</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-e2e/caching-strategies-report.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching strategies for titiler-xarray’s xarray.open_dataset</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-e2e/compare-dev-feature.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Comparing dev and feature</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-e2e/compare-prod-dev.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Comparing prod and dev</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#install-and-import-libraries" id="toc-install-and-import-libraries" class="nav-link active" data-scroll-target="#install-and-import-libraries">1.1 Install and import libraries</a></li>
+  <li><a href="#set-parameters" id="toc-set-parameters" class="nav-link" data-scroll-target="#set-parameters">1.2 Set parameters</a></li>
+  <li><a href="#test-we-can-open-the-files" id="toc-test-we-can-open-the-files" class="nav-link" data-scroll-target="#test-we-can-open-the-files">1.3 Test we can open the files</a></li>
+  <li><a href="#setup-the-destination" id="toc-setup-the-destination" class="nav-link" data-scroll-target="#setup-the-destination">2: Setup the destination</a></li>
+  <li><a href="#set-different-target-chunks" id="toc-set-different-target-chunks" class="nav-link" data-scroll-target="#set-different-target-chunks">3: Set different target chunks</a></li>
+  <li><a href="#check-it-worked" id="toc-check-it-worked" class="nav-link" data-scroll-target="#check-it-worked">4: Check it worked</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.dev/developmentseed/tile-benchmarking&quot;/blob/main/01-generate-datasets/generate-cmip6-zarr.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/developmentseed/tile-benchmarking&quot;/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../01-generate-datasets/generate-cmip6-kerchunk.html">Dataset preparation</a></li><li class="breadcrumb-item"><a href="../01-generate-datasets/generate-cmip6-zarr.html">Create Zarr Stores with Different Chunk Shapes</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Create Zarr Stores with Different Chunk Shapes</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In this notebook, we create Zarr stores for the CMIP6 TAS daily data available in NetCDF on S3. This method of creating Zarr stores uses <a href="https://pangeo-forge.readthedocs.io/">pangeo-forge</a> and it’s <a href="https://pangeo-forge.readthedocs.io/en/latest/pangeo_forge_recipes/recipe_user_guide/index.html">recipes</a> pattern.</p>
+<p>The test datasets produced are:</p>
+<ul>
+<li>Chunked to optimize for time series analysis:
+<ul>
+<li>latitude: 252, longitude: 252, time: 365.</li>
+<li>This dataset has larger chunks, but more timesteps are loaded into each chunk.</li>
+</ul></li>
+<li>Chunked to optimize for visualization at a single time step.
+<ul>
+<li>latitude: 600, longitude: 1440, time: 1.</li>
+<li>This dataset has small chunks, but will likely not work well for time series generation.</li>
+</ul></li>
+<li>Chunked to optimize for both time series and visualization:
+<ul>
+<li>latitude: 600, longitude: 1440, time: 29.</li>
+<li>This dataset has larger chunks, but more timesteps are loaded into each chunk.</li>
+</ul></li>
+</ul>
+<section id="install-and-import-libraries" class="level2">
+<h2 class="anchored" data-anchor-id="install-and-import-libraries">1.1 Install and import libraries</h2>
+<div id="76f00a6a-a2c3-4cad-aa04-4a933eb893a2" class="cell" data-tags="[]" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>capture</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install loguru</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="6376bec4" class="cell" data-editable="true" data-slideshow="{&quot;slide_type&quot;:&quot;&quot;}" data-tags="[]" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> fsspec</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> s3fs</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys<span class="op">;</span> sys.path.append(<span class="st">'..'</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> helpers.profiler <span class="im">import</span> Timer</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> helpers.eodc_hub_role <span class="im">as</span> eodc_hub_role</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="2af30526-e6cd-4fa4-9067-653f5faae132" class="cell" data-tags="[]" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>credentials <span class="op">=</span> eodc_hub_role.fetch_and_set_credentials()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>bucket <span class="op">=</span> <span class="st">'nasa-eodc-data-store'</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>zarr_directory <span class="op">=</span> <span class="st">'test-data/cmip6-zarr'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Note: This is adapted from https://github.com/carbonplan/benchmark-maps/blob/datasets/stores/01b_cmip6_netcdf_to_zarr.ipynb.</p>
+</section>
+<section id="set-parameters" class="level2">
+<h2 class="anchored" data-anchor-id="set-parameters">1.2 Set parameters</h2>
+<div id="6e2abcd8" class="cell" data-editable="true" data-slideshow="{&quot;slide_type&quot;:&quot;&quot;}" data-tags="[&quot;parameters&quot;]" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#parameters</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> <span class="st">"GISS-E2-1-G"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>variable <span class="op">=</span> <span class="st">"tas"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>anon<span class="op">=</span><span class="va">True</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="4d4b5504-7275-4949-9507-ef8c8efd55aa" class="cell" data-tags="[]" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initiate fsspec filesystems for reading and writing</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>s3_path <span class="op">=</span> <span class="ss">f"s3://nex-gddp-cmip6/NEX-GDDP-CMIP6/</span><span class="sc">{</span>model<span class="sc">}</span><span class="ss">/historical/r1i1p1*/</span><span class="sc">{</span>variable<span class="sc">}</span><span class="ss">/*"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fs_read <span class="op">=</span> fsspec.filesystem(<span class="st">"s3"</span>, anon<span class="op">=</span>anon, skip_instance_cache<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>fs_write <span class="op">=</span> fsspec.filesystem(<span class="st">""</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="13e67843-b173-4d68-b045-9da28dd68eb6" class="cell" data-tags="[]" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Retrieve list of available months</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>files_paths <span class="op">=</span> fs_read.glob(s3_path)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(files_paths)<span class="sc">}</span><span class="ss"> discovered from </span><span class="sc">{</span>s3_path<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>65 discovered from s3://nex-gddp-cmip6/NEX-GDDP-CMIP6/GISS-E2-1-G/historical/r1i1p1*/tas/*</code></pre>
+</div>
+</div>
+<div id="af19a04e-77e6-4dc3-b023-7af0c19ca45f" class="cell" data-tags="[]" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>files_paths[<span class="dv">0</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre><code>'nex-gddp-cmip6/NEX-GDDP-CMIP6/GISS-E2-1-G/historical/r1i1p1f2/tas/tas_day_GISS-E2-1-G_historical_r1i1p1f2_gn_1950.nc'</code></pre>
+</div>
+</div>
+</section>
+<section id="test-we-can-open-the-files" class="level2">
+<h2 class="anchored" data-anchor-id="test-we-can-open-the-files">1.3 Test we can open the files</h2>
+<div id="af346f35" class="cell" data-tags="[]" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fs_s3 <span class="op">=</span> s3fs.S3FileSystem(anon<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>filepath <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>files_paths[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> fs_s3.<span class="bu">open</span>(filepath, mode<span class="op">=</span><span class="st">'rb'</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>ds <span class="op">=</span> xr.open_dataset(f)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>ds</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewbox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewbox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+body[data-theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-index-name div,
+.xr-index-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2,
+.xr-no-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class="xr-text-repr-fallback">&lt;xarray.Dataset&gt;
+Dimensions:  (time: 365, lat: 600, lon: 1440)
+Coordinates:
+  * time     (time) object 1950-01-01 12:00:00 ... 1950-12-31 12:00:00
+  * lat      (lat) float64 -59.88 -59.62 -59.38 -59.12 ... 89.38 89.62 89.88
+  * lon      (lon) float64 0.125 0.375 0.625 0.875 ... 359.1 359.4 359.6 359.9
+Data variables:
+    tas      (time, lat, lon) float32 ...
+Attributes: (12/23)
+    downscalingModel:      BCSD
+    activity:              NEX-GDDP-CMIP6
+    contact:               Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget...
+    Conventions:           CF-1.7
+    creation_date:         2021-10-04T18:41:40.796912+00:00
+    frequency:             day
+    ...                    ...
+    history:               2021-10-04T18:41:40.796912+00:00: install global a...
+    disclaimer:            This data is considered provisional and subject to...
+    external_variables:    areacella
+    cmip6_source_id:       GISS-E2-1-G
+    cmip6_institution_id:  NASA-GISS
+    cmip6_license:         CC-BY-SA 4.0</pre><div class="xr-wrap" style="display:none"><div class="xr-header"><div class="xr-obj-type">xarray.Dataset</div></div><ul class="xr-sections"><li class="xr-section-item"><input id="section-d7945462-576b-44cb-b796-455d58c4fe8c" class="xr-section-summary-in" type="checkbox" disabled=""><label for="section-d7945462-576b-44cb-b796-455d58c4fe8c" class="xr-section-summary" title="Expand/collapse section">Dimensions:</label><div class="xr-section-inline-details"><ul class="xr-dim-list"><li><span class="xr-has-index">time</span>: 365</li><li><span class="xr-has-index">lat</span>: 600</li><li><span class="xr-has-index">lon</span>: 1440</li></ul></div><div class="xr-section-details"></div></li><li class="xr-section-item"><input id="section-799d5ded-45ee-4538-ac84-cfba6a1476f3" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-799d5ded-45ee-4538-ac84-cfba6a1476f3" class="xr-section-summary">Coordinates: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">time</span></div><div class="xr-var-dims">(time)</div><div class="xr-var-dtype">object</div><div class="xr-var-preview xr-preview">1950-01-01 12:00:00 ... 1950-12-...</div><input id="attrs-c929091f-b0b3-44a7-90ba-f4b67cb0e3b1" class="xr-var-attrs-in" type="checkbox"><label for="attrs-c929091f-b0b3-44a7-90ba-f4b67cb0e3b1" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-4351f15e-e6bc-42aa-ad71-c726e14ccc26" class="xr-var-data-in" type="checkbox"><label for="data-4351f15e-e6bc-42aa-ad71-c726e14ccc26" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>standard_name :</span></dt><dd>time</dd><dt><span>long_name :</span></dt><dd>time</dd><dt><span>axis :</span></dt><dd>T</dd></dl></div><div class="xr-var-data"><pre>array([cftime.DatetimeNoLeap(1950, 1, 1, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 2, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 3, 12, 0, 0, 0, has_year_zero=True), ...,
+       cftime.DatetimeNoLeap(1950, 12, 29, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 12, 30, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 12, 31, 12, 0, 0, 0, has_year_zero=True)],
+      dtype=object)</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lat</span></div><div class="xr-var-dims">(lat)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">-59.88 -59.62 ... 89.62 89.88</div><input id="attrs-80f53faf-9f4f-45d0-aa6e-bf3cd8d28023" class="xr-var-attrs-in" type="checkbox"><label for="attrs-80f53faf-9f4f-45d0-aa6e-bf3cd8d28023" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-aa3f7936-fd89-4b60-8435-bc86a620365b" class="xr-var-data-in" type="checkbox"><label for="data-aa3f7936-fd89-4b60-8435-bc86a620365b" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>units :</span></dt><dd>degrees_north</dd><dt><span>standard_name :</span></dt><dd>latitude</dd><dt><span>long_name :</span></dt><dd>latitude</dd><dt><span>axis :</span></dt><dd>Y</dd></dl></div><div class="xr-var-data"><pre>array([-59.875, -59.625, -59.375, ...,  89.375,  89.625,  89.875])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lon</span></div><div class="xr-var-dims">(lon)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">0.125 0.375 0.625 ... 359.6 359.9</div><input id="attrs-251dc5ab-18bd-4b86-980c-1d50e7a25c53" class="xr-var-attrs-in" type="checkbox"><label for="attrs-251dc5ab-18bd-4b86-980c-1d50e7a25c53" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-8bbf39c2-e2ca-40af-9ae9-6711f2266308" class="xr-var-data-in" type="checkbox"><label for="data-8bbf39c2-e2ca-40af-9ae9-6711f2266308" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>units :</span></dt><dd>degrees_east</dd><dt><span>standard_name :</span></dt><dd>longitude</dd><dt><span>long_name :</span></dt><dd>longitude</dd><dt><span>axis :</span></dt><dd>X</dd></dl></div><div class="xr-var-data"><pre>array([1.25000e-01, 3.75000e-01, 6.25000e-01, ..., 3.59375e+02, 3.59625e+02,
+       3.59875e+02])</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-3a81d9b4-a4df-4828-941e-566779eed047" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-3a81d9b4-a4df-4828-941e-566779eed047" class="xr-section-summary">Data variables: <span>(1)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span>tas</span></div><div class="xr-var-dims">(time, lat, lon)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">...</div><input id="attrs-b9d772e0-4091-464d-82dc-ebb41d7586d1" class="xr-var-attrs-in" type="checkbox"><label for="attrs-b9d772e0-4091-464d-82dc-ebb41d7586d1" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-7a33b0f2-81f3-4764-8ea7-7b3640d50e6d" class="xr-var-data-in" type="checkbox"><label for="data-7a33b0f2-81f3-4764-8ea7-7b3640d50e6d" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>cell_measures :</span></dt><dd>area: areacella</dd><dt><span>cell_methods :</span></dt><dd>area: mean time: maximum</dd><dt><span>comment :</span></dt><dd>near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax &amp; tasmin</dd><dt><span>units :</span></dt><dd>K</dd><dt><span>long_name :</span></dt><dd>Daily Near-Surface Air Temperature</dd><dt><span>standard_name :</span></dt><dd>air_temperature</dd></dl></div><div class="xr-var-data"><pre>[315360000 values with dtype=float32]</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-664a41bb-fc5f-447d-8df2-34858595ed27" class="xr-section-summary-in" type="checkbox"><label for="section-664a41bb-fc5f-447d-8df2-34858595ed27" class="xr-section-summary">Indexes: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-index-name"><div>time</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-0e7b85b3-bcff-45b6-8d9f-72c67543010e" class="xr-index-data-in" type="checkbox"><label for="index-0e7b85b3-bcff-45b6-8d9f-72c67543010e" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(CFTimeIndex([1950-01-01 12:00:00, 1950-01-02 12:00:00, 1950-01-03 12:00:00,
+             1950-01-04 12:00:00, 1950-01-05 12:00:00, 1950-01-06 12:00:00,
+             1950-01-07 12:00:00, 1950-01-08 12:00:00, 1950-01-09 12:00:00,
+             1950-01-10 12:00:00,
+             ...
+             1950-12-22 12:00:00, 1950-12-23 12:00:00, 1950-12-24 12:00:00,
+             1950-12-25 12:00:00, 1950-12-26 12:00:00, 1950-12-27 12:00:00,
+             1950-12-28 12:00:00, 1950-12-29 12:00:00, 1950-12-30 12:00:00,
+             1950-12-31 12:00:00],
+            dtype='object', length=365, calendar='noleap', freq='D'))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>lat</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-bce088ef-1ef8-4080-9884-c1010715f915" class="xr-index-data-in" type="checkbox"><label for="index-bce088ef-1ef8-4080-9884-c1010715f915" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([-59.875, -59.625, -59.375, -59.125, -58.875, -58.625, -58.375, -58.125,
+       -57.875, -57.625,
+       ...
+        87.625,  87.875,  88.125,  88.375,  88.625,  88.875,  89.125,  89.375,
+        89.625,  89.875],
+      dtype='float64', name='lat', length=600))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>lon</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-3ce2e4d7-9a83-4783-835b-81acb283c6a6" class="xr-index-data-in" type="checkbox"><label for="index-3ce2e4d7-9a83-4783-835b-81acb283c6a6" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([  0.125,   0.375,   0.625,   0.875,   1.125,   1.375,   1.625,   1.875,
+         2.125,   2.375,
+       ...
+       357.625, 357.875, 358.125, 358.375, 358.625, 358.875, 359.125, 359.375,
+       359.625, 359.875],
+      dtype='float64', name='lon', length=1440))</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-4d225579-8cd0-423b-99a1-0a0c1a971126" class="xr-section-summary-in" type="checkbox"><label for="section-4d225579-8cd0-423b-99a1-0a0c1a971126" class="xr-section-summary">Attributes: <span>(23)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><dl class="xr-attrs"><dt><span>downscalingModel :</span></dt><dd>BCSD</dd><dt><span>activity :</span></dt><dd>NEX-GDDP-CMIP6</dd><dt><span>contact :</span></dt><dd>Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org</dd><dt><span>Conventions :</span></dt><dd>CF-1.7</dd><dt><span>creation_date :</span></dt><dd>2021-10-04T18:41:40.796912+00:00</dd><dt><span>frequency :</span></dt><dd>day</dd><dt><span>institution :</span></dt><dd>NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035</dd><dt><span>variant_label :</span></dt><dd>r1i1p1f2</dd><dt><span>product :</span></dt><dd>output</dd><dt><span>realm :</span></dt><dd>atmos</dd><dt><span>source :</span></dt><dd>BCSD</dd><dt><span>scenario :</span></dt><dd>historical</dd><dt><span>references :</span></dt><dd>BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.</dd><dt><span>version :</span></dt><dd>1.0</dd><dt><span>tracking_id :</span></dt><dd>25d6baa3-0404-4eba-a3f1-afddbf69d4cc</dd><dt><span>title :</span></dt><dd>GISS-E2-1-G, r1i1p1f2, historical, global downscaled CMIP6 climate projection data</dd><dt><span>resolution_id :</span></dt><dd>0.25 degree</dd><dt><span>history :</span></dt><dd>2021-10-04T18:41:40.796912+00:00: install global attributes</dd><dt><span>disclaimer :</span></dt><dd>This data is considered provisional and subject to change. This data is provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, this data.</dd><dt><span>external_variables :</span></dt><dd>areacella</dd><dt><span>cmip6_source_id :</span></dt><dd>GISS-E2-1-G</dd><dt><span>cmip6_institution_id :</span></dt><dd>NASA-GISS</dd><dt><span>cmip6_license :</span></dt><dd>CC-BY-SA 4.0</dd></dl></div></li></ul></div></div>
+</div>
+</div>
+</section>
+<section id="setup-the-destination" class="level1">
+<h1>2: Setup the destination</h1>
+<div id="25d9a095" class="cell" data-tags="[]" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>s3_fs <span class="op">=</span> s3fs.S3FileSystem(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    key<span class="op">=</span>credentials[<span class="st">'aws_access_key_id'</span>],</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    secret<span class="op">=</span>credentials[<span class="st">'aws_secret_access_key'</span>],</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    token<span class="op">=</span>credentials[<span class="st">'aws_session_token'</span>], </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    anon<span class="op">=</span><span class="va">False</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="set-different-target-chunks" class="level1">
+<h1>3: Set different target chunks</h1>
+<p>For different sets of chunks, generate a zarr store.</p>
+<div id="35f7c859-94b8-4f41-bf55-af3c72139254" class="cell" data-tags="[]" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>chunk_sets <span class="op">=</span> []</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Optimized for analysis</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>temporal_target_chunks <span class="op">=</span> { <span class="st">'lat'</span>: ds.lat.shape[<span class="dv">0</span>], <span class="st">'lon'</span>: ds.lon.shape[<span class="dv">0</span>], <span class="st">'time'</span>: <span class="dv">29</span> }</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>chunk_sets.append(temporal_target_chunks)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Optimized for visualization at a single time step</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>global_target_chunks <span class="op">=</span> { <span class="st">'lat'</span>: ds.lat.shape[<span class="dv">0</span>], <span class="st">'lon'</span>: ds.lon.shape[<span class="dv">0</span>], <span class="st">'time'</span>: <span class="dv">1</span> }</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>chunk_sets.append(global_target_chunks)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Optimized for time series</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#spatial_target_chunks = calc_auspicious_chunks_dict(ds[variable], chunk_dims=('lat','lon',))</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>spatial_target_chunks <span class="op">=</span> {<span class="st">'time'</span>: <span class="dv">365</span>, <span class="st">'lat'</span>: <span class="dv">262</span>, <span class="st">'lon'</span>: <span class="dv">262</span>}</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>chunk_sets.append(spatial_target_chunks)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="d3fd52a2-8868-4ac1-bb59-5ddf600dcc71" class="cell" data-tags="[]" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>chunk_sets</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<pre><code>[{'lat': 600, 'lon': 1440, 'time': 29},
+ {'lat': 600, 'lon': 1440, 'time': 1},
+ {'time': 365, 'lat': 262, 'lon': 262}]</code></pre>
+</div>
+</div>
+<div id="cc75fffe-e28c-4366-96e4-2bb63ab667be" class="cell" data-tags="[]" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>timings <span class="op">=</span> {}</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Iterate through remote_files to create a fileset</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>fileset <span class="op">=</span> [s3_fs.<span class="bu">open</span>(<span class="bu">file</span>) <span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> files_paths[<span class="dv">0</span>:<span class="dv">2</span>]]</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chunk_set <span class="kw">in</span> chunk_sets:</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    chunk_prefix <span class="op">=</span> <span class="bu">str</span>((<span class="st">"_"</span>).join(<span class="bu">map</span>(<span class="bu">str</span>, chunk_set.values())))</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    store_name <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>zarr_directory<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>chunk_prefix<span class="sc">}</span><span class="ss">_CMIP6_daily_</span><span class="sc">{</span>model<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>variable<span class="sc">}</span><span class="ss">.zarr"</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> Timer() <span class="im">as</span> t:</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>        data <span class="op">=</span> xr.open_mfdataset(fileset, combine<span class="op">=</span><span class="st">'by_coords'</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        data_chunked <span class="op">=</span> data.chunk(chunk_set)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>        store <span class="op">=</span> s3fs.S3Map(root<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>store_name<span class="sc">}</span><span class="ss">"</span>, s3<span class="op">=</span>s3_fs, check<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>        data_chunked.to_zarr(store, mode<span class="op">=</span><span class="st">'w'</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    timings[chunk_prefix] <span class="op">=</span> <span class="bu">round</span>(t.elapsed <span class="op">*</span> <span class="dv">1000</span>, <span class="dv">2</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="d3efc288-5467-4138-b55a-2e53efe1d06e" class="cell" data-tags="[]" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>timings</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<pre><code>{'600_1440_29': 68548.07, '600_1440_1': 46144.38, '365_262_262': 33111.03}</code></pre>
+</div>
+</div>
+</section>
+<section id="check-it-worked" class="level1">
+<h1>4: Check it worked</h1>
+<div id="e05e7871-e328-4a4f-be9c-4674df6812d6" class="cell" data-tags="[]" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chunk_set <span class="kw">in</span> chunk_sets:</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    chunk_prefix <span class="op">=</span> <span class="bu">str</span>((<span class="st">"_"</span>).join(<span class="bu">map</span>(<span class="bu">str</span>, chunk_set.values())))</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    store_name <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>zarr_directory<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>chunk_prefix<span class="sc">}</span><span class="ss">_CMIP6_daily_</span><span class="sc">{</span>model<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>variable<span class="sc">}</span><span class="ss">.zarr"</span>    </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    store <span class="op">=</span> s3fs.S3Map(root<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>store_name<span class="sc">}</span><span class="ss">"</span>, s3<span class="op">=</span>s3_fs, check<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> xr.open_zarr(store, consolidated<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    display(ds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewbox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewbox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+body[data-theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-index-name div,
+.xr-index-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2,
+.xr-no-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class="xr-text-repr-fallback">&lt;xarray.Dataset&gt;
+Dimensions:  (lat: 600, lon: 1440, time: 730)
+Coordinates:
+  * lat      (lat) float64 -59.88 -59.62 -59.38 -59.12 ... 89.38 89.62 89.88
+  * lon      (lon) float64 0.125 0.375 0.625 0.875 ... 359.1 359.4 359.6 359.9
+  * time     (time) object 1950-01-01 12:00:00 ... 1951-12-31 12:00:00
+Data variables:
+    tas      (time, lat, lon) float32 dask.array&lt;chunksize=(29, 600, 1440), meta=np.ndarray&gt;
+Attributes: (12/23)
+    Conventions:           CF-1.7
+    activity:              NEX-GDDP-CMIP6
+    cmip6_institution_id:  NASA-GISS
+    cmip6_license:         CC-BY-SA 4.0
+    cmip6_source_id:       GISS-E2-1-G
+    contact:               Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget...
+    ...                    ...
+    scenario:              historical
+    source:                BCSD
+    title:                 GISS-E2-1-G, r1i1p1f2, historical, global downscal...
+    tracking_id:           25d6baa3-0404-4eba-a3f1-afddbf69d4cc
+    variant_label:         r1i1p1f2
+    version:               1.0</pre><div class="xr-wrap" style="display:none"><div class="xr-header"><div class="xr-obj-type">xarray.Dataset</div></div><ul class="xr-sections"><li class="xr-section-item"><input id="section-7c3f79bc-0399-492a-be0b-40b8015b811a" class="xr-section-summary-in" type="checkbox" disabled=""><label for="section-7c3f79bc-0399-492a-be0b-40b8015b811a" class="xr-section-summary" title="Expand/collapse section">Dimensions:</label><div class="xr-section-inline-details"><ul class="xr-dim-list"><li><span class="xr-has-index">lat</span>: 600</li><li><span class="xr-has-index">lon</span>: 1440</li><li><span class="xr-has-index">time</span>: 730</li></ul></div><div class="xr-section-details"></div></li><li class="xr-section-item"><input id="section-dbe4728c-c4a6-4912-adc2-7b85ddc489d8" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-dbe4728c-c4a6-4912-adc2-7b85ddc489d8" class="xr-section-summary">Coordinates: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lat</span></div><div class="xr-var-dims">(lat)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">-59.88 -59.62 ... 89.62 89.88</div><input id="attrs-9a582d9d-444a-4678-9e25-4b4bd8d083b7" class="xr-var-attrs-in" type="checkbox"><label for="attrs-9a582d9d-444a-4678-9e25-4b4bd8d083b7" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-2a9440f6-f23f-4b64-8acb-1c8a09d5170e" class="xr-var-data-in" type="checkbox"><label for="data-2a9440f6-f23f-4b64-8acb-1c8a09d5170e" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>Y</dd><dt><span>long_name :</span></dt><dd>latitude</dd><dt><span>standard_name :</span></dt><dd>latitude</dd><dt><span>units :</span></dt><dd>degrees_north</dd></dl></div><div class="xr-var-data"><pre>array([-59.875, -59.625, -59.375, ...,  89.375,  89.625,  89.875])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lon</span></div><div class="xr-var-dims">(lon)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">0.125 0.375 0.625 ... 359.6 359.9</div><input id="attrs-6daad0c9-f2a5-48d0-a346-2d97d733ef85" class="xr-var-attrs-in" type="checkbox"><label for="attrs-6daad0c9-f2a5-48d0-a346-2d97d733ef85" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-7552b2a3-4727-4cb9-80d9-c1e9e8d5e3ae" class="xr-var-data-in" type="checkbox"><label for="data-7552b2a3-4727-4cb9-80d9-c1e9e8d5e3ae" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>X</dd><dt><span>long_name :</span></dt><dd>longitude</dd><dt><span>standard_name :</span></dt><dd>longitude</dd><dt><span>units :</span></dt><dd>degrees_east</dd></dl></div><div class="xr-var-data"><pre>array([1.25000e-01, 3.75000e-01, 6.25000e-01, ..., 3.59375e+02, 3.59625e+02,
+       3.59875e+02])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">time</span></div><div class="xr-var-dims">(time)</div><div class="xr-var-dtype">object</div><div class="xr-var-preview xr-preview">1950-01-01 12:00:00 ... 1951-12-...</div><input id="attrs-aa398798-b265-4381-a9fe-fa08c17e37ef" class="xr-var-attrs-in" type="checkbox"><label for="attrs-aa398798-b265-4381-a9fe-fa08c17e37ef" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-82cd9449-8012-4336-b33a-3ffe6c216553" class="xr-var-data-in" type="checkbox"><label for="data-82cd9449-8012-4336-b33a-3ffe6c216553" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>T</dd><dt><span>long_name :</span></dt><dd>time</dd><dt><span>standard_name :</span></dt><dd>time</dd></dl></div><div class="xr-var-data"><pre>array([cftime.DatetimeNoLeap(1950, 1, 1, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 2, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 3, 12, 0, 0, 0, has_year_zero=True), ...,
+       cftime.DatetimeNoLeap(1951, 12, 29, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1951, 12, 30, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1951, 12, 31, 12, 0, 0, 0, has_year_zero=True)],
+      dtype=object)</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-b5a9f49a-de50-40a4-84ab-c91ef0ad31fa" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-b5a9f49a-de50-40a4-84ab-c91ef0ad31fa" class="xr-section-summary">Data variables: <span>(1)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span>tas</span></div><div class="xr-var-dims">(time, lat, lon)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">dask.array&lt;chunksize=(29, 600, 1440), meta=np.ndarray&gt;</div><input id="attrs-d170ff2a-2532-4472-8d75-6f765bcdcd62" class="xr-var-attrs-in" type="checkbox"><label for="attrs-d170ff2a-2532-4472-8d75-6f765bcdcd62" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-fd854efe-0e67-45d6-ace8-879f6f4cc9d4" class="xr-var-data-in" type="checkbox"><label for="data-fd854efe-0e67-45d6-ace8-879f6f4cc9d4" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>cell_measures :</span></dt><dd>area: areacella</dd><dt><span>cell_methods :</span></dt><dd>area: mean time: maximum</dd><dt><span>comment :</span></dt><dd>near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax &amp; tasmin</dd><dt><span>long_name :</span></dt><dd>Daily Near-Surface Air Temperature</dd><dt><span>standard_name :</span></dt><dd>air_temperature</dd><dt><span>units :</span></dt><dd>K</dd></dl></div><div class="xr-var-data">
+<table class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><table class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th></th>
+<th data-quarto-table-cell-role="th">Array</th>
+<th data-quarto-table-cell-role="th">Chunk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Bytes</td>
+<td>2.35 GiB</td>
+<td>95.58 MiB</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Shape</td>
+<td>(730, 600, 1440)</td>
+<td>(29, 600, 1440)</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Dask graph</td>
+<td colspan="2">26 chunks in 2 graph layers</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Data type</td>
+<td colspan="2">float32 numpy.ndarray</td>
+</tr>
+</tbody>
+</table></td>
+<td><svg width="215" height="135" style="stroke:rgb(0,0,0);stroke-width:1">
+<!-- Horizontal lines --> <line x1="10" y1="0" x2="45" y2="35" style="stroke-width:2"></line> <line x1="10" y1="50" x2="45" y2="85" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="10" y1="0" x2="10" y2="50" style="stroke-width:2"></line> <line x1="11" y1="1" x2="11" y2="51"></line> <line x1="12" y1="2" x2="12" y2="52"></line> <line x1="15" y1="5" x2="15" y2="55"></line> <line x1="17" y1="7" x2="17" y2="57"></line> <line x1="18" y1="8" x2="18" y2="58"></line> <line x1="21" y1="11" x2="21" y2="61"></line> <line x1="22" y1="12" x2="22" y2="62"></line> <line x1="24" y1="14" x2="24" y2="64"></line> <line x1="27" y1="17" x2="27" y2="67"></line> <line x1="28" y1="18" x2="28" y2="68"></line> <line x1="31" y1="21" x2="31" y2="71"></line> <line x1="32" y1="22" x2="32" y2="72"></line> <line x1="34" y1="24" x2="34" y2="74"></line> <line x1="37" y1="27" x2="37" y2="77"></line> <line x1="38" y1="28" x2="38" y2="78"></line> <line x1="39" y1="29" x2="39" y2="79"></line> <line x1="42" y1="32" x2="42" y2="82"></line> <line x1="44" y1="34" x2="44" y2="84"></line> <line x1="45" y1="35" x2="45" y2="85" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="10.0,0.0 45.7843137254902,35.7843137254902 45.7843137254902,85.7843137254902 10.0,50.0" style="fill:#8B4903A0;stroke-width:0"></polygon> <!-- Horizontal lines --> <line x1="10" y1="0" x2="130" y2="0" style="stroke-width:2"></line> <line x1="11" y1="1" x2="131" y2="1"></line> <line x1="12" y1="2" x2="132" y2="2"></line> <line x1="15" y1="5" x2="135" y2="5"></line> <line x1="17" y1="7" x2="137" y2="7"></line> <line x1="18" y1="8" x2="138" y2="8"></line> <line x1="21" y1="11" x2="141" y2="11"></line> <line x1="22" y1="12" x2="142" y2="12"></line> <line x1="24" y1="14" x2="144" y2="14"></line> <line x1="27" y1="17" x2="147" y2="17"></line> <line x1="28" y1="18" x2="148" y2="18"></line> <line x1="31" y1="21" x2="151" y2="21"></line> <line x1="32" y1="22" x2="152" y2="22"></line> <line x1="34" y1="24" x2="154" y2="24"></line> <line x1="37" y1="27" x2="157" y2="27"></line> <line x1="38" y1="28" x2="158" y2="28"></line> <line x1="39" y1="29" x2="159" y2="29"></line> <line x1="42" y1="32" x2="162" y2="32"></line> <line x1="44" y1="34" x2="164" y2="34"></line> <line x1="45" y1="35" x2="165" y2="35" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="10" y1="0" x2="45" y2="35" style="stroke-width:2"></line> <line x1="130" y1="0" x2="165" y2="35" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="10.0,0.0 130.0,0.0 165.7843137254902,35.7843137254902 45.7843137254902,35.7843137254902" style="fill:#8B4903A0;stroke-width:0"></polygon> <!-- Horizontal lines --> <line x1="45" y1="35" x2="165" y2="35" style="stroke-width:2"></line> <line x1="45" y1="85" x2="165" y2="85" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="45" y1="35" x2="45" y2="85" style="stroke-width:2"></line> <line x1="165" y1="35" x2="165" y2="85" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="45.7843137254902,35.7843137254902 165.7843137254902,35.7843137254902 165.7843137254902,85.7843137254902 45.7843137254902,85.7843137254902" style="fill:#ECB172A0;stroke-width:0"></polygon> <!-- Text --> <text x="105.784314" y="105.784314" font-size="1.0rem" font-weight="100" text-anchor="middle">1440</text> <text x="185.784314" y="60.784314" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(-90,185.784314,60.784314)">600</text> <text x="17.892157" y="87.892157" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(45,17.892157,87.892157)">730</text>
+</svg></td>
+</tr>
+</tbody>
+</table>
+</div></li></ul></div></li><li class="xr-section-item"><input id="section-f8af425a-a0e3-46f9-8466-221a7573624a" class="xr-section-summary-in" type="checkbox"><label for="section-f8af425a-a0e3-46f9-8466-221a7573624a" class="xr-section-summary">Indexes: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-index-name"><div>lat</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-7a54ad5b-2891-4266-bad2-dcbb17a92826" class="xr-index-data-in" type="checkbox"><label for="index-7a54ad5b-2891-4266-bad2-dcbb17a92826" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([-59.875, -59.625, -59.375, -59.125, -58.875, -58.625, -58.375, -58.125,
+       -57.875, -57.625,
+       ...
+        87.625,  87.875,  88.125,  88.375,  88.625,  88.875,  89.125,  89.375,
+        89.625,  89.875],
+      dtype='float64', name='lat', length=600))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>lon</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-a69030d7-e614-418c-8cf9-5f2193840170" class="xr-index-data-in" type="checkbox"><label for="index-a69030d7-e614-418c-8cf9-5f2193840170" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([  0.125,   0.375,   0.625,   0.875,   1.125,   1.375,   1.625,   1.875,
+         2.125,   2.375,
+       ...
+       357.625, 357.875, 358.125, 358.375, 358.625, 358.875, 359.125, 359.375,
+       359.625, 359.875],
+      dtype='float64', name='lon', length=1440))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>time</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-a3a4a40d-982e-4f61-9f42-bc279fe30f5e" class="xr-index-data-in" type="checkbox"><label for="index-a3a4a40d-982e-4f61-9f42-bc279fe30f5e" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(CFTimeIndex([1950-01-01 12:00:00, 1950-01-02 12:00:00, 1950-01-03 12:00:00,
+             1950-01-04 12:00:00, 1950-01-05 12:00:00, 1950-01-06 12:00:00,
+             1950-01-07 12:00:00, 1950-01-08 12:00:00, 1950-01-09 12:00:00,
+             1950-01-10 12:00:00,
+             ...
+             1951-12-22 12:00:00, 1951-12-23 12:00:00, 1951-12-24 12:00:00,
+             1951-12-25 12:00:00, 1951-12-26 12:00:00, 1951-12-27 12:00:00,
+             1951-12-28 12:00:00, 1951-12-29 12:00:00, 1951-12-30 12:00:00,
+             1951-12-31 12:00:00],
+            dtype='object', length=730, calendar='noleap', freq='D'))</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-af4210f7-b773-4b7d-b7a4-933077416d0e" class="xr-section-summary-in" type="checkbox"><label for="section-af4210f7-b773-4b7d-b7a4-933077416d0e" class="xr-section-summary">Attributes: <span>(23)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><dl class="xr-attrs"><dt><span>Conventions :</span></dt><dd>CF-1.7</dd><dt><span>activity :</span></dt><dd>NEX-GDDP-CMIP6</dd><dt><span>cmip6_institution_id :</span></dt><dd>NASA-GISS</dd><dt><span>cmip6_license :</span></dt><dd>CC-BY-SA 4.0</dd><dt><span>cmip6_source_id :</span></dt><dd>GISS-E2-1-G</dd><dt><span>contact :</span></dt><dd>Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org</dd><dt><span>creation_date :</span></dt><dd>2021-10-04T18:41:40.796912+00:00</dd><dt><span>disclaimer :</span></dt><dd>This data is considered provisional and subject to change. This data is provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, this data.</dd><dt><span>downscalingModel :</span></dt><dd>BCSD</dd><dt><span>external_variables :</span></dt><dd>areacella</dd><dt><span>frequency :</span></dt><dd>day</dd><dt><span>history :</span></dt><dd>2021-10-04T18:41:40.796912+00:00: install global attributes</dd><dt><span>institution :</span></dt><dd>NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035</dd><dt><span>product :</span></dt><dd>output</dd><dt><span>realm :</span></dt><dd>atmos</dd><dt><span>references :</span></dt><dd>BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.</dd><dt><span>resolution_id :</span></dt><dd>0.25 degree</dd><dt><span>scenario :</span></dt><dd>historical</dd><dt><span>source :</span></dt><dd>BCSD</dd><dt><span>title :</span></dt><dd>GISS-E2-1-G, r1i1p1f2, historical, global downscaled CMIP6 climate projection data</dd><dt><span>tracking_id :</span></dt><dd>25d6baa3-0404-4eba-a3f1-afddbf69d4cc</dd><dt><span>variant_label :</span></dt><dd>r1i1p1f2</dd><dt><span>version :</span></dt><dd>1.0</dd></dl></div></li></ul></div></div>
+</div>
+<div class="cell-output cell-output-display">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewbox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewbox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+body[data-theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-index-name div,
+.xr-index-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2,
+.xr-no-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class="xr-text-repr-fallback">&lt;xarray.Dataset&gt;
+Dimensions:  (lat: 600, lon: 1440, time: 730)
+Coordinates:
+  * lat      (lat) float64 -59.88 -59.62 -59.38 -59.12 ... 89.38 89.62 89.88
+  * lon      (lon) float64 0.125 0.375 0.625 0.875 ... 359.1 359.4 359.6 359.9
+  * time     (time) object 1950-01-01 12:00:00 ... 1951-12-31 12:00:00
+Data variables:
+    tas      (time, lat, lon) float32 dask.array&lt;chunksize=(1, 600, 1440), meta=np.ndarray&gt;
+Attributes: (12/23)
+    Conventions:           CF-1.7
+    activity:              NEX-GDDP-CMIP6
+    cmip6_institution_id:  NASA-GISS
+    cmip6_license:         CC-BY-SA 4.0
+    cmip6_source_id:       GISS-E2-1-G
+    contact:               Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget...
+    ...                    ...
+    scenario:              historical
+    source:                BCSD
+    title:                 GISS-E2-1-G, r1i1p1f2, historical, global downscal...
+    tracking_id:           25d6baa3-0404-4eba-a3f1-afddbf69d4cc
+    variant_label:         r1i1p1f2
+    version:               1.0</pre><div class="xr-wrap" style="display:none"><div class="xr-header"><div class="xr-obj-type">xarray.Dataset</div></div><ul class="xr-sections"><li class="xr-section-item"><input id="section-2d27b5c9-55be-4a2a-97de-1a745bcacbad" class="xr-section-summary-in" type="checkbox" disabled=""><label for="section-2d27b5c9-55be-4a2a-97de-1a745bcacbad" class="xr-section-summary" title="Expand/collapse section">Dimensions:</label><div class="xr-section-inline-details"><ul class="xr-dim-list"><li><span class="xr-has-index">lat</span>: 600</li><li><span class="xr-has-index">lon</span>: 1440</li><li><span class="xr-has-index">time</span>: 730</li></ul></div><div class="xr-section-details"></div></li><li class="xr-section-item"><input id="section-41f857dc-e0b0-43f0-910e-189d9a42ee59" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-41f857dc-e0b0-43f0-910e-189d9a42ee59" class="xr-section-summary">Coordinates: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lat</span></div><div class="xr-var-dims">(lat)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">-59.88 -59.62 ... 89.62 89.88</div><input id="attrs-2d1f60ef-ea1b-42d4-bd70-501dd5c6d928" class="xr-var-attrs-in" type="checkbox"><label for="attrs-2d1f60ef-ea1b-42d4-bd70-501dd5c6d928" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-f184fd5e-6f8f-400f-a095-7cbaa34a3c43" class="xr-var-data-in" type="checkbox"><label for="data-f184fd5e-6f8f-400f-a095-7cbaa34a3c43" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>Y</dd><dt><span>long_name :</span></dt><dd>latitude</dd><dt><span>standard_name :</span></dt><dd>latitude</dd><dt><span>units :</span></dt><dd>degrees_north</dd></dl></div><div class="xr-var-data"><pre>array([-59.875, -59.625, -59.375, ...,  89.375,  89.625,  89.875])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lon</span></div><div class="xr-var-dims">(lon)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">0.125 0.375 0.625 ... 359.6 359.9</div><input id="attrs-c63ec457-10f6-4888-be9c-9f4f1715802d" class="xr-var-attrs-in" type="checkbox"><label for="attrs-c63ec457-10f6-4888-be9c-9f4f1715802d" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-9d46b90c-f251-4f8a-8ea2-e991852d076a" class="xr-var-data-in" type="checkbox"><label for="data-9d46b90c-f251-4f8a-8ea2-e991852d076a" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>X</dd><dt><span>long_name :</span></dt><dd>longitude</dd><dt><span>standard_name :</span></dt><dd>longitude</dd><dt><span>units :</span></dt><dd>degrees_east</dd></dl></div><div class="xr-var-data"><pre>array([1.25000e-01, 3.75000e-01, 6.25000e-01, ..., 3.59375e+02, 3.59625e+02,
+       3.59875e+02])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">time</span></div><div class="xr-var-dims">(time)</div><div class="xr-var-dtype">object</div><div class="xr-var-preview xr-preview">1950-01-01 12:00:00 ... 1951-12-...</div><input id="attrs-72f43fda-14bb-438e-936a-a83c83fe39f6" class="xr-var-attrs-in" type="checkbox"><label for="attrs-72f43fda-14bb-438e-936a-a83c83fe39f6" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-35277061-5f5c-4654-80e1-ab00537addbb" class="xr-var-data-in" type="checkbox"><label for="data-35277061-5f5c-4654-80e1-ab00537addbb" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>T</dd><dt><span>long_name :</span></dt><dd>time</dd><dt><span>standard_name :</span></dt><dd>time</dd></dl></div><div class="xr-var-data"><pre>array([cftime.DatetimeNoLeap(1950, 1, 1, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 2, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 3, 12, 0, 0, 0, has_year_zero=True), ...,
+       cftime.DatetimeNoLeap(1951, 12, 29, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1951, 12, 30, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1951, 12, 31, 12, 0, 0, 0, has_year_zero=True)],
+      dtype=object)</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-7390cadc-8838-492f-86a9-2e16bdb5023a" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-7390cadc-8838-492f-86a9-2e16bdb5023a" class="xr-section-summary">Data variables: <span>(1)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span>tas</span></div><div class="xr-var-dims">(time, lat, lon)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">dask.array&lt;chunksize=(1, 600, 1440), meta=np.ndarray&gt;</div><input id="attrs-a7bbcfef-054d-42b0-9e7f-e539dda14cbd" class="xr-var-attrs-in" type="checkbox"><label for="attrs-a7bbcfef-054d-42b0-9e7f-e539dda14cbd" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-94c33d4a-172f-473a-80c3-339d33e53948" class="xr-var-data-in" type="checkbox"><label for="data-94c33d4a-172f-473a-80c3-339d33e53948" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>cell_measures :</span></dt><dd>area: areacella</dd><dt><span>cell_methods :</span></dt><dd>area: mean time: maximum</dd><dt><span>comment :</span></dt><dd>near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax &amp; tasmin</dd><dt><span>long_name :</span></dt><dd>Daily Near-Surface Air Temperature</dd><dt><span>standard_name :</span></dt><dd>air_temperature</dd><dt><span>units :</span></dt><dd>K</dd></dl></div><div class="xr-var-data">
+<table class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><table class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th></th>
+<th data-quarto-table-cell-role="th">Array</th>
+<th data-quarto-table-cell-role="th">Chunk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Bytes</td>
+<td>2.35 GiB</td>
+<td>3.30 MiB</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Shape</td>
+<td>(730, 600, 1440)</td>
+<td>(1, 600, 1440)</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Dask graph</td>
+<td colspan="2">730 chunks in 2 graph layers</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Data type</td>
+<td colspan="2">float32 numpy.ndarray</td>
+</tr>
+</tbody>
+</table></td>
+<td><svg width="215" height="135" style="stroke:rgb(0,0,0);stroke-width:1">
+<!-- Horizontal lines --> <line x1="10" y1="0" x2="45" y2="35" style="stroke-width:2"></line> <line x1="10" y1="50" x2="45" y2="85" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="10" y1="0" x2="10" y2="50" style="stroke-width:2"></line> <line x1="11" y1="1" x2="11" y2="51"></line> <line x1="13" y1="3" x2="13" y2="53"></line> <line x1="15" y1="5" x2="15" y2="55"></line> <line x1="17" y1="7" x2="17" y2="57"></line> <line x1="19" y1="9" x2="19" y2="59"></line> <line x1="21" y1="11" x2="21" y2="61"></line> <line x1="23" y1="13" x2="23" y2="63"></line> <line x1="25" y1="15" x2="25" y2="65"></line> <line x1="26" y1="16" x2="26" y2="66"></line> <line x1="28" y1="18" x2="28" y2="68"></line> <line x1="30" y1="20" x2="30" y2="70"></line> <line x1="32" y1="22" x2="32" y2="72"></line> <line x1="34" y1="24" x2="34" y2="74"></line> <line x1="36" y1="26" x2="36" y2="76"></line> <line x1="38" y1="28" x2="38" y2="78"></line> <line x1="40" y1="30" x2="40" y2="80"></line> <line x1="42" y1="32" x2="42" y2="82"></line> <line x1="43" y1="33" x2="43" y2="83"></line> <line x1="45" y1="35" x2="45" y2="85" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="10.0,0.0 45.7843137254902,35.7843137254902 45.7843137254902,85.7843137254902 10.0,50.0" style="fill:#8B4903A0;stroke-width:0"></polygon> <!-- Horizontal lines --> <line x1="10" y1="0" x2="130" y2="0" style="stroke-width:2"></line> <line x1="11" y1="1" x2="131" y2="1"></line> <line x1="13" y1="3" x2="133" y2="3"></line> <line x1="15" y1="5" x2="135" y2="5"></line> <line x1="17" y1="7" x2="137" y2="7"></line> <line x1="19" y1="9" x2="139" y2="9"></line> <line x1="21" y1="11" x2="141" y2="11"></line> <line x1="23" y1="13" x2="143" y2="13"></line> <line x1="25" y1="15" x2="145" y2="15"></line> <line x1="26" y1="16" x2="146" y2="16"></line> <line x1="28" y1="18" x2="148" y2="18"></line> <line x1="30" y1="20" x2="150" y2="20"></line> <line x1="32" y1="22" x2="152" y2="22"></line> <line x1="34" y1="24" x2="154" y2="24"></line> <line x1="36" y1="26" x2="156" y2="26"></line> <line x1="38" y1="28" x2="158" y2="28"></line> <line x1="40" y1="30" x2="160" y2="30"></line> <line x1="42" y1="32" x2="162" y2="32"></line> <line x1="43" y1="33" x2="163" y2="33"></line> <line x1="45" y1="35" x2="165" y2="35" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="10" y1="0" x2="45" y2="35" style="stroke-width:2"></line> <line x1="130" y1="0" x2="165" y2="35" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="10.0,0.0 130.0,0.0 165.7843137254902,35.7843137254902 45.7843137254902,35.7843137254902" style="fill:#8B4903A0;stroke-width:0"></polygon> <!-- Horizontal lines --> <line x1="45" y1="35" x2="165" y2="35" style="stroke-width:2"></line> <line x1="45" y1="85" x2="165" y2="85" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="45" y1="35" x2="45" y2="85" style="stroke-width:2"></line> <line x1="165" y1="35" x2="165" y2="85" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="45.7843137254902,35.7843137254902 165.7843137254902,35.7843137254902 165.7843137254902,85.7843137254902 45.7843137254902,85.7843137254902" style="fill:#ECB172A0;stroke-width:0"></polygon> <!-- Text --> <text x="105.784314" y="105.784314" font-size="1.0rem" font-weight="100" text-anchor="middle">1440</text> <text x="185.784314" y="60.784314" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(-90,185.784314,60.784314)">600</text> <text x="17.892157" y="87.892157" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(45,17.892157,87.892157)">730</text>
+</svg></td>
+</tr>
+</tbody>
+</table>
+</div></li></ul></div></li><li class="xr-section-item"><input id="section-d8f2222a-be24-4f2e-9713-18a7b1ead73f" class="xr-section-summary-in" type="checkbox"><label for="section-d8f2222a-be24-4f2e-9713-18a7b1ead73f" class="xr-section-summary">Indexes: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-index-name"><div>lat</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-43080052-bdc8-412d-b1c6-50440d84d598" class="xr-index-data-in" type="checkbox"><label for="index-43080052-bdc8-412d-b1c6-50440d84d598" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([-59.875, -59.625, -59.375, -59.125, -58.875, -58.625, -58.375, -58.125,
+       -57.875, -57.625,
+       ...
+        87.625,  87.875,  88.125,  88.375,  88.625,  88.875,  89.125,  89.375,
+        89.625,  89.875],
+      dtype='float64', name='lat', length=600))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>lon</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-6f0b95d6-d890-43a6-a8d9-735dbc34fe9b" class="xr-index-data-in" type="checkbox"><label for="index-6f0b95d6-d890-43a6-a8d9-735dbc34fe9b" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([  0.125,   0.375,   0.625,   0.875,   1.125,   1.375,   1.625,   1.875,
+         2.125,   2.375,
+       ...
+       357.625, 357.875, 358.125, 358.375, 358.625, 358.875, 359.125, 359.375,
+       359.625, 359.875],
+      dtype='float64', name='lon', length=1440))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>time</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-bd2e8d0b-0ff3-4cad-b0ac-bcd283ae0e1e" class="xr-index-data-in" type="checkbox"><label for="index-bd2e8d0b-0ff3-4cad-b0ac-bcd283ae0e1e" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(CFTimeIndex([1950-01-01 12:00:00, 1950-01-02 12:00:00, 1950-01-03 12:00:00,
+             1950-01-04 12:00:00, 1950-01-05 12:00:00, 1950-01-06 12:00:00,
+             1950-01-07 12:00:00, 1950-01-08 12:00:00, 1950-01-09 12:00:00,
+             1950-01-10 12:00:00,
+             ...
+             1951-12-22 12:00:00, 1951-12-23 12:00:00, 1951-12-24 12:00:00,
+             1951-12-25 12:00:00, 1951-12-26 12:00:00, 1951-12-27 12:00:00,
+             1951-12-28 12:00:00, 1951-12-29 12:00:00, 1951-12-30 12:00:00,
+             1951-12-31 12:00:00],
+            dtype='object', length=730, calendar='noleap', freq='D'))</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-783c0aa4-aa39-4c1f-85a1-1da33fd244df" class="xr-section-summary-in" type="checkbox"><label for="section-783c0aa4-aa39-4c1f-85a1-1da33fd244df" class="xr-section-summary">Attributes: <span>(23)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><dl class="xr-attrs"><dt><span>Conventions :</span></dt><dd>CF-1.7</dd><dt><span>activity :</span></dt><dd>NEX-GDDP-CMIP6</dd><dt><span>cmip6_institution_id :</span></dt><dd>NASA-GISS</dd><dt><span>cmip6_license :</span></dt><dd>CC-BY-SA 4.0</dd><dt><span>cmip6_source_id :</span></dt><dd>GISS-E2-1-G</dd><dt><span>contact :</span></dt><dd>Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org</dd><dt><span>creation_date :</span></dt><dd>2021-10-04T18:41:40.796912+00:00</dd><dt><span>disclaimer :</span></dt><dd>This data is considered provisional and subject to change. This data is provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, this data.</dd><dt><span>downscalingModel :</span></dt><dd>BCSD</dd><dt><span>external_variables :</span></dt><dd>areacella</dd><dt><span>frequency :</span></dt><dd>day</dd><dt><span>history :</span></dt><dd>2021-10-04T18:41:40.796912+00:00: install global attributes</dd><dt><span>institution :</span></dt><dd>NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035</dd><dt><span>product :</span></dt><dd>output</dd><dt><span>realm :</span></dt><dd>atmos</dd><dt><span>references :</span></dt><dd>BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.</dd><dt><span>resolution_id :</span></dt><dd>0.25 degree</dd><dt><span>scenario :</span></dt><dd>historical</dd><dt><span>source :</span></dt><dd>BCSD</dd><dt><span>title :</span></dt><dd>GISS-E2-1-G, r1i1p1f2, historical, global downscaled CMIP6 climate projection data</dd><dt><span>tracking_id :</span></dt><dd>25d6baa3-0404-4eba-a3f1-afddbf69d4cc</dd><dt><span>variant_label :</span></dt><dd>r1i1p1f2</dd><dt><span>version :</span></dt><dd>1.0</dd></dl></div></li></ul></div></div>
+</div>
+<div class="cell-output cell-output-display">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewbox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewbox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+body[data-theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-index-name div,
+.xr-index-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2,
+.xr-no-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class="xr-text-repr-fallback">&lt;xarray.Dataset&gt;
+Dimensions:  (lat: 600, lon: 1440, time: 730)
+Coordinates:
+  * lat      (lat) float64 -59.88 -59.62 -59.38 -59.12 ... 89.38 89.62 89.88
+  * lon      (lon) float64 0.125 0.375 0.625 0.875 ... 359.1 359.4 359.6 359.9
+  * time     (time) object 1950-01-01 12:00:00 ... 1951-12-31 12:00:00
+Data variables:
+    tas      (time, lat, lon) float32 dask.array&lt;chunksize=(365, 262, 262), meta=np.ndarray&gt;
+Attributes: (12/23)
+    Conventions:           CF-1.7
+    activity:              NEX-GDDP-CMIP6
+    cmip6_institution_id:  NASA-GISS
+    cmip6_license:         CC-BY-SA 4.0
+    cmip6_source_id:       GISS-E2-1-G
+    contact:               Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget...
+    ...                    ...
+    scenario:              historical
+    source:                BCSD
+    title:                 GISS-E2-1-G, r1i1p1f2, historical, global downscal...
+    tracking_id:           25d6baa3-0404-4eba-a3f1-afddbf69d4cc
+    variant_label:         r1i1p1f2
+    version:               1.0</pre><div class="xr-wrap" style="display:none"><div class="xr-header"><div class="xr-obj-type">xarray.Dataset</div></div><ul class="xr-sections"><li class="xr-section-item"><input id="section-d4a56635-b862-484a-8a2b-c7dc67d24678" class="xr-section-summary-in" type="checkbox" disabled=""><label for="section-d4a56635-b862-484a-8a2b-c7dc67d24678" class="xr-section-summary" title="Expand/collapse section">Dimensions:</label><div class="xr-section-inline-details"><ul class="xr-dim-list"><li><span class="xr-has-index">lat</span>: 600</li><li><span class="xr-has-index">lon</span>: 1440</li><li><span class="xr-has-index">time</span>: 730</li></ul></div><div class="xr-section-details"></div></li><li class="xr-section-item"><input id="section-8f3793f8-0d40-4aed-9376-db31a15748fd" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-8f3793f8-0d40-4aed-9376-db31a15748fd" class="xr-section-summary">Coordinates: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lat</span></div><div class="xr-var-dims">(lat)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">-59.88 -59.62 ... 89.62 89.88</div><input id="attrs-39047e3d-37c1-44fa-8544-9d63be0053a4" class="xr-var-attrs-in" type="checkbox"><label for="attrs-39047e3d-37c1-44fa-8544-9d63be0053a4" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-fb019535-8928-4583-ba12-3716c46bde85" class="xr-var-data-in" type="checkbox"><label for="data-fb019535-8928-4583-ba12-3716c46bde85" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>Y</dd><dt><span>long_name :</span></dt><dd>latitude</dd><dt><span>standard_name :</span></dt><dd>latitude</dd><dt><span>units :</span></dt><dd>degrees_north</dd></dl></div><div class="xr-var-data"><pre>array([-59.875, -59.625, -59.375, ...,  89.375,  89.625,  89.875])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">lon</span></div><div class="xr-var-dims">(lon)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">0.125 0.375 0.625 ... 359.6 359.9</div><input id="attrs-8b8bace4-4e26-408c-b2e1-aa3ade8c886b" class="xr-var-attrs-in" type="checkbox"><label for="attrs-8b8bace4-4e26-408c-b2e1-aa3ade8c886b" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-e1f2a3b8-9a19-4f23-81ba-9d275ae40be6" class="xr-var-data-in" type="checkbox"><label for="data-e1f2a3b8-9a19-4f23-81ba-9d275ae40be6" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>X</dd><dt><span>long_name :</span></dt><dd>longitude</dd><dt><span>standard_name :</span></dt><dd>longitude</dd><dt><span>units :</span></dt><dd>degrees_east</dd></dl></div><div class="xr-var-data"><pre>array([1.25000e-01, 3.75000e-01, 6.25000e-01, ..., 3.59375e+02, 3.59625e+02,
+       3.59875e+02])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">time</span></div><div class="xr-var-dims">(time)</div><div class="xr-var-dtype">object</div><div class="xr-var-preview xr-preview">1950-01-01 12:00:00 ... 1951-12-...</div><input id="attrs-dbeb947f-c85d-462d-a69a-cf87134c7c51" class="xr-var-attrs-in" type="checkbox"><label for="attrs-dbeb947f-c85d-462d-a69a-cf87134c7c51" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-fdf6dc67-cb73-4e78-bfd1-73e76246aa75" class="xr-var-data-in" type="checkbox"><label for="data-fdf6dc67-cb73-4e78-bfd1-73e76246aa75" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>axis :</span></dt><dd>T</dd><dt><span>long_name :</span></dt><dd>time</dd><dt><span>standard_name :</span></dt><dd>time</dd></dl></div><div class="xr-var-data"><pre>array([cftime.DatetimeNoLeap(1950, 1, 1, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 2, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1950, 1, 3, 12, 0, 0, 0, has_year_zero=True), ...,
+       cftime.DatetimeNoLeap(1951, 12, 29, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1951, 12, 30, 12, 0, 0, 0, has_year_zero=True),
+       cftime.DatetimeNoLeap(1951, 12, 31, 12, 0, 0, 0, has_year_zero=True)],
+      dtype=object)</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-a03600ba-e228-481c-a36f-bd4e07140975" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-a03600ba-e228-481c-a36f-bd4e07140975" class="xr-section-summary">Data variables: <span>(1)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span>tas</span></div><div class="xr-var-dims">(time, lat, lon)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">dask.array&lt;chunksize=(365, 262, 262), meta=np.ndarray&gt;</div><input id="attrs-066c482a-e86f-41da-803c-801a160e6366" class="xr-var-attrs-in" type="checkbox"><label for="attrs-066c482a-e86f-41da-803c-801a160e6366" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-876fff99-bace-4ddd-aff3-8aed5df2232c" class="xr-var-data-in" type="checkbox"><label for="data-876fff99-bace-4ddd-aff3-8aed5df2232c" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>cell_measures :</span></dt><dd>area: areacella</dd><dt><span>cell_methods :</span></dt><dd>area: mean time: maximum</dd><dt><span>comment :</span></dt><dd>near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax &amp; tasmin</dd><dt><span>long_name :</span></dt><dd>Daily Near-Surface Air Temperature</dd><dt><span>standard_name :</span></dt><dd>air_temperature</dd><dt><span>units :</span></dt><dd>K</dd></dl></div><div class="xr-var-data">
+<table class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><table class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th></th>
+<th data-quarto-table-cell-role="th">Array</th>
+<th data-quarto-table-cell-role="th">Chunk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Bytes</td>
+<td>2.35 GiB</td>
+<td>95.58 MiB</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Shape</td>
+<td>(730, 600, 1440)</td>
+<td>(365, 262, 262)</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Dask graph</td>
+<td colspan="2">36 chunks in 2 graph layers</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Data type</td>
+<td colspan="2">float32 numpy.ndarray</td>
+</tr>
+</tbody>
+</table></td>
+<td><svg width="215" height="135" style="stroke:rgb(0,0,0);stroke-width:1">
+<!-- Horizontal lines --> <line x1="10" y1="0" x2="45" y2="35" style="stroke-width:2"></line> <line x1="10" y1="21" x2="45" y2="57"></line> <line x1="10" y1="43" x2="45" y2="79"></line> <line x1="10" y1="50" x2="45" y2="85" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="10" y1="0" x2="10" y2="50" style="stroke-width:2"></line> <line x1="27" y1="17" x2="27" y2="67"></line> <line x1="45" y1="35" x2="45" y2="85" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="10.0,0.0 45.7843137254902,35.7843137254902 45.7843137254902,85.7843137254902 10.0,50.0" style="fill:#ECB172A0;stroke-width:0"></polygon> <!-- Horizontal lines --> <line x1="10" y1="0" x2="130" y2="0" style="stroke-width:2"></line> <line x1="27" y1="17" x2="147" y2="17"></line> <line x1="45" y1="35" x2="165" y2="35" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="10" y1="0" x2="45" y2="35" style="stroke-width:2"></line> <line x1="31" y1="0" x2="67" y2="35"></line> <line x1="53" y1="0" x2="89" y2="35"></line> <line x1="75" y1="0" x2="111" y2="35"></line> <line x1="97" y1="0" x2="133" y2="35"></line> <line x1="119" y1="0" x2="154" y2="35"></line> <line x1="130" y1="0" x2="165" y2="35" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="10.0,0.0 130.0,0.0 165.7843137254902,35.7843137254902 45.7843137254902,35.7843137254902" style="fill:#ECB172A0;stroke-width:0"></polygon> <!-- Horizontal lines --> <line x1="45" y1="35" x2="165" y2="35" style="stroke-width:2"></line> <line x1="45" y1="57" x2="165" y2="57"></line> <line x1="45" y1="79" x2="165" y2="79"></line> <line x1="45" y1="85" x2="165" y2="85" style="stroke-width:2"></line> <!-- Vertical lines --> <line x1="45" y1="35" x2="45" y2="85" style="stroke-width:2"></line> <line x1="67" y1="35" x2="67" y2="85"></line> <line x1="89" y1="35" x2="89" y2="85"></line> <line x1="111" y1="35" x2="111" y2="85"></line> <line x1="133" y1="35" x2="133" y2="85"></line> <line x1="154" y1="35" x2="154" y2="85"></line> <line x1="165" y1="35" x2="165" y2="85" style="stroke-width:2"></line> <!-- Colored Rectangle --> <polygon points="45.7843137254902,35.7843137254902 165.7843137254902,35.7843137254902 165.7843137254902,85.7843137254902 45.7843137254902,85.7843137254902" style="fill:#ECB172A0;stroke-width:0"></polygon> <!-- Text --> <text x="105.784314" y="105.784314" font-size="1.0rem" font-weight="100" text-anchor="middle">1440</text> <text x="185.784314" y="60.784314" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(-90,185.784314,60.784314)">600</text> <text x="17.892157" y="87.892157" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(45,17.892157,87.892157)">730</text>
+</svg></td>
+</tr>
+</tbody>
+</table>
+</div></li></ul></div></li><li class="xr-section-item"><input id="section-334640e3-6aa8-4bd9-9555-c220177fcb4b" class="xr-section-summary-in" type="checkbox"><label for="section-334640e3-6aa8-4bd9-9555-c220177fcb4b" class="xr-section-summary">Indexes: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-index-name"><div>lat</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-ded84a2c-0509-4359-a4ca-a0f2ef84ca0c" class="xr-index-data-in" type="checkbox"><label for="index-ded84a2c-0509-4359-a4ca-a0f2ef84ca0c" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([-59.875, -59.625, -59.375, -59.125, -58.875, -58.625, -58.375, -58.125,
+       -57.875, -57.625,
+       ...
+        87.625,  87.875,  88.125,  88.375,  88.625,  88.875,  89.125,  89.375,
+        89.625,  89.875],
+      dtype='float64', name='lat', length=600))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>lon</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-bd5f1feb-e159-4ecf-95b3-f6f56b55bfc4" class="xr-index-data-in" type="checkbox"><label for="index-bd5f1feb-e159-4ecf-95b3-f6f56b55bfc4" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([  0.125,   0.375,   0.625,   0.875,   1.125,   1.375,   1.625,   1.875,
+         2.125,   2.375,
+       ...
+       357.625, 357.875, 358.125, 358.375, 358.625, 358.875, 359.125, 359.375,
+       359.625, 359.875],
+      dtype='float64', name='lon', length=1440))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>time</div></div><div class="xr-index-preview">PandasIndex</div><div></div><input id="index-1f0dd5c0-ba6c-4f41-916e-254f1d675292" class="xr-index-data-in" type="checkbox"><label for="index-1f0dd5c0-ba6c-4f41-916e-254f1d675292" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(CFTimeIndex([1950-01-01 12:00:00, 1950-01-02 12:00:00, 1950-01-03 12:00:00,
+             1950-01-04 12:00:00, 1950-01-05 12:00:00, 1950-01-06 12:00:00,
+             1950-01-07 12:00:00, 1950-01-08 12:00:00, 1950-01-09 12:00:00,
+             1950-01-10 12:00:00,
+             ...
+             1951-12-22 12:00:00, 1951-12-23 12:00:00, 1951-12-24 12:00:00,
+             1951-12-25 12:00:00, 1951-12-26 12:00:00, 1951-12-27 12:00:00,
+             1951-12-28 12:00:00, 1951-12-29 12:00:00, 1951-12-30 12:00:00,
+             1951-12-31 12:00:00],
+            dtype='object', length=730, calendar='noleap', freq='D'))</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-cd71e3ea-dc02-4ff3-aca7-e799de5255e3" class="xr-section-summary-in" type="checkbox"><label for="section-cd71e3ea-dc02-4ff3-aca7-e799de5255e3" class="xr-section-summary">Attributes: <span>(23)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><dl class="xr-attrs"><dt><span>Conventions :</span></dt><dd>CF-1.7</dd><dt><span>activity :</span></dt><dd>NEX-GDDP-CMIP6</dd><dt><span>cmip6_institution_id :</span></dt><dd>NASA-GISS</dd><dt><span>cmip6_license :</span></dt><dd>CC-BY-SA 4.0</dd><dt><span>cmip6_source_id :</span></dt><dd>GISS-E2-1-G</dd><dt><span>contact :</span></dt><dd>Dr. Rama Nemani: rama.nemani@nasa.gov, Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org</dd><dt><span>creation_date :</span></dt><dd>2021-10-04T18:41:40.796912+00:00</dd><dt><span>disclaimer :</span></dt><dd>This data is considered provisional and subject to change. This data is provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, this data.</dd><dt><span>downscalingModel :</span></dt><dd>BCSD</dd><dt><span>external_variables :</span></dt><dd>areacella</dd><dt><span>frequency :</span></dt><dd>day</dd><dt><span>history :</span></dt><dd>2021-10-04T18:41:40.796912+00:00: install global attributes</dd><dt><span>institution :</span></dt><dd>NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035</dd><dt><span>product :</span></dt><dd>output</dd><dt><span>realm :</span></dt><dd>atmos</dd><dt><span>references :</span></dt><dd>BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.</dd><dt><span>resolution_id :</span></dt><dd>0.25 degree</dd><dt><span>scenario :</span></dt><dd>historical</dd><dt><span>source :</span></dt><dd>BCSD</dd><dt><span>title :</span></dt><dd>GISS-E2-1-G, r1i1p1f2, historical, global downscaled CMIP6 climate projection data</dd><dt><span>tracking_id :</span></dt><dd>25d6baa3-0404-4eba-a3f1-afddbf69d4cc</dd><dt><span>variant_label :</span></dt><dd>r1i1p1f2</dd><dt><span>version :</span></dt><dd>1.0</dd></dl></div></li></ul></div></div>
+</div>
+</div>
+<div id="5e62d759-f4ad-4d09-b6aa-c9894bc7d870" class="cell" data-tags="[]" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to json file</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>datasets <span class="op">=</span> {}</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chunk_set <span class="kw">in</span> chunk_sets:</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    chunk_prefix <span class="op">=</span> <span class="bu">str</span>((<span class="st">"_"</span>).join(<span class="bu">map</span>(<span class="bu">str</span>, chunk_set.values())))</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    dataset_id <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>chunk_prefix<span class="sc">}</span><span class="ss">_CMIP6_daily_</span><span class="sc">{</span>model<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>variable<span class="sc">}</span><span class="ss">.zarr"</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    dataset_url <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>zarr_directory<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>dataset_id<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    datasets[dataset_id] <span class="op">=</span> {</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"dataset_url"</span>: dataset_url,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"variable"</span>: variable</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"cmip6-zarr-datasets.json"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    f.write(json.dumps(datasets))</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    f.close()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+    let newTheme = '';
+    if(darkModeDefault) {
+      newTheme = isAlternate ? baseTheme : alternateTheme;
+    } else {
+      newTheme = isAlternate ? alternateTheme : baseTheme;
+    }
+    const changeGiscusTheme = () => {
+      // From: https://github.com/giscus/giscus/issues/336
+      const sendMessage = (message) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+      sendMessage({
+        setConfig: {
+          theme: newTheme
+        }
+      });
+    }
+    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+    if (isGiscussLoaded) {
+      changeGiscusTheme();
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  const darkModeDefault = false;
+  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+    toggleGiscusIfUsed(toAlternate, darkModeDefault);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/developmentseed\.org\/tile-benchmarking");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../01-generate-datasets/generate-cmip6-pyramid.html" class="pagination-link" aria-label="Create Zarr Pyramid">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Create Zarr Pyramid</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../01-generate-datasets/generate-fake-data-with-chunks.html" class="pagination-link" aria-label="Generate fake data">
+        <span class="nav-page-text">Generate fake data</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.dev/developmentseed/tile-benchmarking&quot;/blob/main/01-generate-datasets/generate-cmip6-zarr.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/developmentseed/tile-benchmarking&quot;/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

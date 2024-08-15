@@ -1,0 +1,51 @@
+{
+    "power_901_monthly_meteorology_utc.zarr": {
+        "dataset_url": "s3://power-analysis-ready-datastore/power_901_monthly_meteorology_utc.zarr",
+        "variable": "TS"
+    },
+    "cmip6-pds_GISS-E2-1-G_historical_tas": {
+        "dataset_url": "s3://cmip6-pds/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/historical/r2i1p1f1/Amon/tas/gn/v20180827/",
+        "variable": "tas"
+    },
+    "pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc": {
+        "dataset_url": "https://nex-gddp-cmip6.s3-us-west-2.amazonaws.com/NEX-GDDP-CMIP6/ACCESS-CM2/historical/r1i1p1f1/pr/pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc",
+        "variable": "pr"
+    },
+    "20231107090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc": {
+        "dataset_url": "s3://podaac-ops-cumulus-protected/MUR-JPL-L4-GLOB-v4.1/20231107090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+        "variable": "analysed_sst",
+        "extra_args": {
+            "protected": true
+        }        
+    },
+    "GLDAS_NOAH025_3H.A20230731.2100.021.nc4": {
+        "dataset_url": "s3://gesdisc-cumulus-prod-protected/GLDAS/GLDAS_NOAH025_3H.2.1/2023/212/GLDAS_NOAH025_3H.A20230731.2100.021.nc4",
+        "variable": "SoilMoi0_10cm_inst",
+        "extra_args": {
+            "protected": true,
+            "bounds": [-180, -60, 180, 90]
+        }
+    },
+    "combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json": {
+        "dataset_url": "s3://veda-data-store-staging/cmip6-GISS-E2-1-G-tas-kerchunk/combined_CMIP6_daily_GISS-E2-1-G_tas_kerchunk.json",
+        "variable": "tas",
+        "extra_args": {
+            "reference": true
+        }
+    },
+    "3B-DAY.MS.MRG.3IMERG.20000601-S000000-E235959.V07.nc4": {
+        "dataset_url": "s3://gesdisc-cumulus-prod-protected/GPM_L3/GPM_3IMERGDF.07/2000/06/3B-DAY.MS.MRG.3IMERG.20000601-S000000-E235959.V07.nc4",
+        "variable": "precipitation",
+        "extra_args": {
+            "protected": true
+        }
+    },
+    "3B42_Daily.19980101.7.nc4": {
+        "dataset_url": "s3://gesdisc-cumulus-prod-protected/TRMM_L3/TRMM_3B42_Daily.7/1998/01/3B42_Daily.19980101.7.nc4",
+        "variable": "precipitation",
+        "extra_args": {
+            "protected": true,
+            "bounds": [-180, -50, 180, 50]
+        }
+    }
+}
