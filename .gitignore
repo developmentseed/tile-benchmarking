@@ -31,3 +31,7 @@ downloaded*results
 
 04-cmr-load-tests/results
 04-cmr-load-tests/urls
+
+/.quarto/
+*_cache/
+_site/

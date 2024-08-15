@@ -1,0 +1,52 @@
+project:
+  type: website
+
+website:
+  page-navigation: true
+  title: "Tile Benchmarking"
+  site-url: "https://developmentseed.org/tile-benchmarking"
+  repo-url: https://github.com/developmentseed/tile-benchmarking"
+  repo-actions: [edit, issue]
+
+  page-footer:
+    right: "This page is built with ❤️ and [Quarto](https://quarto.org/)."
+
+  sidebar:
+    style: "docked"
+    search: true
+    collapse-level: 2
+    contents:
+      - href: index.qmd
+        text: Welcome
+      - section: Dataset preparation
+        contents:
+          - 01-generate-datasets/generate-cmip6-kerchunk.ipynb
+          - 01-generate-datasets/generate-cmip6-pyramid.ipynb
+          - 01-generate-datasets/generate-cmip6-zarr.ipynb
+          - 01-generate-datasets/generate-fake-data-with-chunks.ipynb
+      - section: Tile Generation
+        contents:
+          - 02-run-tests/01-cog-gdal-tests.ipynb
+          - 02-run-tests/02-cog-kerchunk-zarr.ipynb
+          - 02-run-tests/03-chunk-size.ipynb
+          - 02-run-tests/04-number-of-spatial-chunks.ipynb
+          - 02-run-tests/05-cmip6-pyramid.ipynb
+          - 02-run-tests/06-cmr-netcdf.ipynb
+      - section: Load testing
+        contents:
+          - 03-e2e/caching-strategies-report.ipynb
+          - 03-e2e/compare-dev-feature.ipynb
+          - 03-e2e/compare-prod-dev.ipynb
+
+format:
+  html:
+    theme:
+      light: [cosmo]
+      dark: [cosmo, theme-dark.scss]
+    code-copy: true
+    code-overflow: wrap
+    css: styles.css
+    toc: true
+    toc-depth: 3
+filters:
+  - quarto
