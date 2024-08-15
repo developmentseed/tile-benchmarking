@@ -5,6 +5,46 @@ from titiler.cmr import __version__ as titiler_cmr_version
 from rio_tiler.models import ImageData
 import psutil
 
+# Local modules
+import sys
+
+sys.path.append("..")
+import helpers.eodc_hub_role as eodc_hub_role
+from helpers.dataset import (
+    load_earthaccess_data,
+    get_resolution,
+    get_webmercator_extent,
+    get_max_zoom_level,
+)
+
+
+def generate_arguments(cmr_test, iterations, max_zoom_level):
+    """Return titiler-cmr queries for generating random tile indices over all requested zoom levels"""
+    arguments = []
+    zoom_levels = range(max_zoom_level)
+    for zoom in zoom_levels:
+        arguments.extend(cmr_test.generate_arguments(iterations, zoom))
+    return arguments
+
+
+def run_cmr_tile_tests(concept_id, cmr_query, variable, iterations):
+    """Generate tiles using titiler-cmr. Returns the URI to the results"""
+    ds = load_earthaccess_data(concept_id, cmr_query)
+    resolution = get_resolution(ds)
+    extent = get_webmercator_extent(ds)
+    max_zoom_level = get_max_zoom_level(resolution)
+    cmr_test = CMRTileTest(
+        dataset_id=concept_id,
+        lat_extent=extent["lat_extent"],
+        lon_extent=extent["lon_extent"],
+        cmr_query=cmr_query,
+        variable=variable,
+    )
+    arguments = generate_arguments(cmr_test, iterations, max_zoom_level)
+    cmr_test.run_batch(arguments=arguments)
+    credentials = eodc_hub_role.fetch_and_set_credentials()
+    return cmr_test.store_results(credentials)
+
 
 def get_size(bytes, suffix="B"):
     """Format bytes."""
