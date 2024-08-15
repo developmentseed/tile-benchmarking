@@ -28,3 +28,7 @@ cdk.context.json
 03-e2e/urls
 *cache*
 downloaded*results
+
+/.quarto/
+*_cache/
+_site/
