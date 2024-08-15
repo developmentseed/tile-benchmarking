@@ -2,90 +2,90 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/index.html</loc>
-    <lastmod>2024-08-15T16:11:09.499Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.413Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/01-cog-gdal-tests.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/run-cog-tests.html</loc>
-    <lastmod>2024-08-15T16:11:09.487Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.405Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/04-number-of-spatial-chunks.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/05-cmip6-pyramid.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.401Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/03-chunk-size.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/01-generate-datasets/generate-fake-data-with-chunks.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/01-generate-datasets/generate-cmip6-zarr.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/01-generate-datasets/merge-all.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/03-e2e/compare-prod-dev.html</loc>
-    <lastmod>2024-08-15T16:11:09.491Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.409Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/03-e2e/caching-strategies-report.html</loc>
-    <lastmod>2024-08-15T16:11:09.491Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.405Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/03-e2e/run-tests.html</loc>
-    <lastmod>2024-08-15T16:11:09.495Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.409Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/03-e2e/compare-dev-feature.html</loc>
-    <lastmod>2024-08-15T16:11:09.491Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.409Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/01-generate-datasets/generate-cmip6-kerchunk.html</loc>
-    <lastmod>2024-08-15T16:11:09.479Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.393Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/01-generate-datasets/generate-cmip6-pyramid.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/01-generate-datasets/cmip6-pgstac/generate_cmip6_items.html</loc>
-    <lastmod>2024-08-15T16:11:09.475Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.393Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/predict-tile-times.html</loc>
-    <lastmod>2024-08-15T16:11:09.487Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.401Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/06-cmr-netcdf.html</loc>
-    <lastmod>2024-08-15T16:11:09.487Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.401Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/02-cog-kerchunk-zarr.html</loc>
-    <lastmod>2024-08-15T16:11:09.483Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.397Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/test-xarray-open-dataset.html</loc>
-    <lastmod>2024-08-15T16:11:09.491Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.405Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/run-xarray-tests.html</loc>
-    <lastmod>2024-08-15T16:11:09.487Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.405Z</lastmod>
   </url>
   <url>
     <loc>https://developmentseed.org/tile-benchmarking/02-run-tests/app-code-model.html</loc>
-    <lastmod>2024-08-15T16:11:09.487Z</lastmod>
+    <lastmod>2024-08-15T17:23:54.401Z</lastmod>
   </url>
 </urlset>
