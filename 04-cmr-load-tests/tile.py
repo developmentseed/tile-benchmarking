@@ -9,7 +9,7 @@ def gen_datetime_query(temporal):
     return pd.to_datetime(temporal[0]).isoformat("T") + "Z"
 
 
-def gen_query(
+def get_tile_path(
     concept_id,
     variable,
     temporal,
@@ -43,7 +43,7 @@ def generate_locust_urls(uri, output_file, **kwargs):
     df = dataframe_helpers.expand_timings(df).reset_index()
     df["temporal"] = df.apply(lambda x: x["cmr_query"]["temporal"], axis=1)
     df["query"] = df.apply(
-        lambda x: gen_query(
+        lambda x: get_tile_path(
             x["dataset_id"], x["variable"], x["temporal"], x["tile"], **kwargs
         ),
         axis=1,
