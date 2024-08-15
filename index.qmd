@@ -1,0 +1,30 @@
+---
+title: "Tile Benchmarking"
+subtitle: "Benchmarking titiler plugins"
+---
+
+## Welcome {#welcome}
+
+This site contains benchmarking results for [titiler-xarray](https://github.com/developmentseed/titiler-xarray), [titiler-pgstac](https://github.com/stac-utils/titiler-pgstac), and [titiler-cmr](https://github.com/developmentseed/titiler-cmr).
+
+### Environment Setup
+
+It is recommended to run this project on the [VEDA JupyterHub](https://nasa-veda.2i2c.cloud/) if using datasets generated in `01-generate-datasets/`. See instructions on getting an account on the [VEDA JupyterHub docs page](https://nasa-impact.github.io/veda-docs/services/jupyterhub.html).
+
+It is the intention of this project that it can also be used to benchmark tiling for arbitrary zarr datasets. Examples are forthcoming.
+
+Use the `requirements.txt` or `environment.yaml` to setup a python environment.
+
+```
+mamba env create -f environment.yaml
+mamba activate tile-benchmarking
+```
+
+
+### Contents
+
+The contents are broken into three sections:
+
+1. Dataset preparation - prepare datasets for testing titiler-xarray and titiler-pgstac.
+2. Tile generation - test the time required to generate individual tiles.
+3. Load testing - use locust and siege to simulate multiple users requesting tiles simultaneously.
