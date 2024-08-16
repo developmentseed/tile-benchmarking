@@ -41,12 +41,15 @@ def generate_locust_urls(uri, output_file, **kwargs):
     credentials = eodc_hub_role.fetch_and_set_credentials()
     df = dataframe_helpers.load_all_into_dataframe(credentials, [uri], use_boto3=False)
     df = dataframe_helpers.expand_timings(df).reset_index()
+    df["method"] = "VEDA Hub"
     df["temporal"] = df.apply(lambda x: x["cmr_query"]["temporal"], axis=1)
-    df["query"] = df.apply(
+    df["Response Time"] = df.apply(lambda x: float(x["timings"][0]), axis=1)
+    df["url"] = df.apply(
         lambda x: get_tile_path(
             x["dataset_id"], x["variable"], x["temporal"], x["tile"], **kwargs
         ),
         axis=1,
     )
-    df["query"].to_csv(output_file, index=False, header=False)
+    df = df[["url", "Response Time", "method", "tile", "zoom"]]
+    df["url"].to_csv(output_file, index=False, header=False)
     return df

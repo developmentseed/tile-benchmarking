@@ -3,6 +3,9 @@ from titiler.cmr.backend import CMRBackend
 from titiler.cmr.reader import ZarrReader
 from titiler.cmr import __version__ as titiler_cmr_version
 from rio_tiler.models import ImageData
+from titiler.core.utils import render_image
+from titiler.core.resources.enums import ImageType
+
 import psutil
 
 # Local modules
@@ -18,8 +21,8 @@ from helpers.dataset import (
 )
 
 
-def generate_arguments(cmr_test, iterations, max_zoom_level):
-    """Return titiler-cmr queries for generating random tile indices over all requested zoom levels"""
+def generate_tile_urls(cmr_test, iterations, max_zoom_level):
+    """Return titiler-cmr urls for generating random tile indices over all requested zoom levels"""
     arguments = []
     zoom_levels = range(max_zoom_level)
     for zoom in zoom_levels:
@@ -27,20 +30,25 @@ def generate_arguments(cmr_test, iterations, max_zoom_level):
     return arguments
 
 
-def run_cmr_tile_tests(concept_id, cmr_query, variable, iterations):
+def run_cmr_tile_tests(dataset_info: dict, iterations: int):
     """Generate tiles using titiler-cmr. Returns the URI to the results"""
-    ds = load_earthaccess_data(concept_id, cmr_query)
+    ds = load_earthaccess_data(dataset_info["concept_id"], dataset_info["cmr_query"])
     resolution = get_resolution(ds)
     extent = get_webmercator_extent(ds)
     max_zoom_level = get_max_zoom_level(resolution)
     cmr_test = CMRTileTest(
-        dataset_id=concept_id,
+        dataset_id=dataset_info["concept_id"],
         lat_extent=extent["lat_extent"],
         lon_extent=extent["lon_extent"],
-        cmr_query=cmr_query,
-        variable=variable,
+        cmr_query=dataset_info["cmr_query"],
+        variable=dataset_info["variable"],
+        extra_args={
+            "rescale": dataset_info["rescale"],
+            "colormap_name": dataset_info["colormap_name"],
+            "output_format": dataset_info["output_format"],
+        },
     )
-    arguments = generate_arguments(cmr_test, iterations, max_zoom_level)
+    arguments = generate_tile_urls(cmr_test, iterations, max_zoom_level)
     cmr_test.run_batch(arguments=arguments)
     credentials = eodc_hub_role.fetch_and_set_credentials()
     return cmr_test.store_results(credentials)
@@ -68,7 +76,6 @@ def tile(
     """Create map tile."""
     backend = CMRBackend(reader=ZarrReader, reader_options=reader_options)
     cmr_query["concept_id"] = concept_id
-
     return backend.tile(tile_x, tile_y, tile_z, cmr_query=cmr_query, **kwargs)
 
 
@@ -87,10 +94,19 @@ class CMRTileTest(Test):
 
     @timer_decorator
     def run(self, xyz_tile: tuple[int, int, int], **kwargs):
-        return tile(
+        image, _ = tile(
             *xyz_tile,
             concept_id=self.dataset_id,
             cmr_query=self.cmr_query,
             reader_options=self.reader_options,
             **kwargs,
         )
+        if rescale := self.extra_args.get("rescale"):
+            image.rescale(rescale)
+
+        output_format = ImageType(self.extra_args.get("output_format", "png"))
+        content, media_type = render_image(
+            image, output_format=output_format, colormap=self.extra_args.get("colormap")
+        )
+
+        return content

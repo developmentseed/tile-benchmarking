@@ -48,7 +48,6 @@ def process_locust_results(results_location):
     df = split_aggregated_results(df, full_results)
     df["zoom"] = df.apply(lambda x: int(x["Name"].split("?")[0].split("/")[3]), axis=1)
     df["tile"] = df.apply(lambda x: x["Name"].split("?")[0].split("/")[3:6], axis=1)
-
-    df = df.rename(columns={"Name": "query"})
+    df = df.rename(columns={"Name": "url"})
     df["method"] = "AWS Lambda"
     return df
