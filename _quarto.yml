@@ -37,6 +37,7 @@ website:
           - 03-e2e/caching-strategies-report.ipynb
           - 03-e2e/compare-dev-feature.ipynb
           - 03-e2e/compare-prod-dev.ipynb
+          - 04-cmr-load-tests/01-compare-local-lambda.ipynb
 
 format:
   html:
