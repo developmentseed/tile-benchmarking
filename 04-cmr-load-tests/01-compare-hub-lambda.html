@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Specify file containing results from “local” tests – Tile Benchmarking</title>
+<title>Comparing titiler-cmr usage – Tile Benchmarking</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -120,7 +120,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../03-e2e/caching-strategies-report.html">Load testing</a></li><li class="breadcrumb-item"><a href="../04-cmr-load-tests/01-compare-local-lambda.html">Specify file containing results from “local” tests</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../03-e2e/caching-strategies-report.html">Load testing</a></li><li class="breadcrumb-item"><a href="../04-cmr-load-tests/01-compare-hub-lambda.html">Comparing titiler-cmr usage</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -265,8 +265,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../04-cmr-load-tests/01-compare-local-lambda.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Specify file containing results from “local” tests</span></a>
+  <a href="../04-cmr-load-tests/01-compare-hub-lambda.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Comparing titiler-cmr usage</span></a>
   </div>
 </li>
       </ul>
@@ -281,19 +281,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#use-locust-to-time-tile-generation" id="toc-use-locust-to-time-tile-generation" class="nav-link active" data-scroll-target="#use-locust-to-time-tile-generation">Use locust to time tile generation</a></li>
-  <li><a href="#process-locust-results-and-combine-with-local-results" id="toc-process-locust-results-and-combine-with-local-results" class="nav-link" data-scroll-target="#process-locust-results-and-combine-with-local-results">Process locust results and combine with local results</a></li>
+  <li><a href="#specify-file-containing-results-from-veda-jupyterhub-tests" id="toc-specify-file-containing-results-from-veda-jupyterhub-tests" class="nav-link active" data-scroll-target="#specify-file-containing-results-from-veda-jupyterhub-tests">Specify file containing results from VEDA JupyterHub tests</a></li>
+  <li><a href="#use-locust-to-time-tile-generation" id="toc-use-locust-to-time-tile-generation" class="nav-link" data-scroll-target="#use-locust-to-time-tile-generation">Use locust to time tile generation</a></li>
+  <li><a href="#process-locust-results-and-combine-with-jupyterhub-results" id="toc-process-locust-results-and-combine-with-jupyterhub-results" class="nav-link" data-scroll-target="#process-locust-results-and-combine-with-jupyterhub-results">Process locust results and combine with JupyterHub results</a></li>
   <li><a href="#upload-results-to-s3" id="toc-upload-results-to-s3" class="nav-link" data-scroll-target="#upload-results-to-s3">Upload results to S3</a></li>
   <li><a href="#plot-results" id="toc-plot-results" class="nav-link" data-scroll-target="#plot-results">Plot results</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.dev/developmentseed/tile-benchmarking&quot;/blob/main/04-cmr-load-tests/01-compare-local-lambda.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/developmentseed/tile-benchmarking&quot;/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.dev/developmentseed/tile-benchmarking&quot;/blob/main/04-cmr-load-tests/01-compare-hub-lambda.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/developmentseed/tile-benchmarking&quot;/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../03-e2e/caching-strategies-report.html">Load testing</a></li><li class="breadcrumb-item"><a href="../04-cmr-load-tests/01-compare-local-lambda.html">Specify file containing results from “local” tests</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../03-e2e/caching-strategies-report.html">Load testing</a></li><li class="breadcrumb-item"><a href="../04-cmr-load-tests/01-compare-hub-lambda.html">Comparing titiler-cmr usage</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Specify file containing results from “local” tests</h1>
+<h1 class="title">Comparing titiler-cmr usage</h1>
 </div>
 
 
@@ -310,7 +311,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="cell-1" class="cell" data-execution_count="1">
+<p>This notebook compares tile generation using titiler-cmr on AWS lambda to running titiler-cmr on the VEDA JupyterHub.</p>
+<div id="cell-2" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> hvplot.pandas  <span class="co"># noqa</span></span>
@@ -895,7 +897,9 @@ if (window.Jupyter !== undefined) {
 })(window);</script>
 </div>
 </div>
-<div id="cell-3" class="cell" data-execution_count="2">
+<section id="specify-file-containing-results-from-veda-jupyterhub-tests" class="level2">
+<h2 class="anchored" data-anchor-id="specify-file-containing-results-from-veda-jupyterhub-tests">Specify file containing results from VEDA JupyterHub tests</h2>
+<div id="cell-4" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define URIs for results from running tile generation tests on the VEDA Hub</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>gpm_imerg <span class="op">=</span> {</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"uri"</span>: <span class="st">"s3://nasa-eodc-data-store/test-results/20240816190529_CMRTileTest_C2723754850-GES_DISC.json"</span>,</span>
@@ -915,17 +919,18 @@ if (window.Jupyter !== undefined) {
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    ds[<span class="st">"results_output"</span>] <span class="op">=</span> <span class="ss">f"results/</span><span class="sc">{</span>ds[<span class="st">'test_id'</span>]<span class="sc">}</span><span class="ss">"</span></span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    ds[<span class="st">"df"</span>] <span class="op">=</span> generate_locust_urls(ds[<span class="st">"uri"</span>], ds[<span class="st">"urls_output_file"</span>], <span class="op">**</span>ds[<span class="st">"kwargs"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
 <section id="use-locust-to-time-tile-generation" class="level2">
 <h2 class="anchored" data-anchor-id="use-locust-to-time-tile-generation">Use locust to time tile generation</h2>
-<div id="cell-5" class="cell">
+<div id="cell-6" class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ds <span class="kw">in</span> [gpm_imerg, mur_sst]:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command <span class="op">=</span> <span class="ss">f"locust -f locust_titiler_cmr.py --headless --users 1 --iterations 1 --csv </span><span class="sc">{</span>ds[<span class="st">'results_output'</span>] <span class="sc">}</span><span class="ss"> --urls-file </span><span class="sc">{</span>ds[<span class="st">'urls_output_file'</span>]<span class="sc">}</span><span class="ss"> --csv-full-history --host https://dev-titiler-cmr.delta-backend.com"</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    subprocess.call(command, shell<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="process-locust-results-and-combine-with-local-results" class="level2">
-<h2 class="anchored" data-anchor-id="process-locust-results-and-combine-with-local-results">Process locust results and combine with local results</h2>
-<div id="cell-7" class="cell" data-execution_count="3">
+<section id="process-locust-results-and-combine-with-jupyterhub-results" class="level2">
+<h2 class="anchored" data-anchor-id="process-locust-results-and-combine-with-jupyterhub-results">Process locust results and combine with JupyterHub results</h2>
+<div id="cell-8" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ds <span class="kw">in</span> [gpm_imerg, mur_sst]:</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    locust_df <span class="op">=</span> process_locust_results(ds[<span class="st">"results_output"</span>])</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> pd.concat([ds[<span class="st">"df"</span>], locust_df], axis<span class="op">=</span><span class="dv">0</span>).reset_index()</span>
@@ -939,7 +944,7 @@ if (window.Jupyter !== undefined) {
 </section>
 <section id="upload-results-to-s3" class="level2">
 <h2 class="anchored" data-anchor-id="upload-results-to-s3">Upload results to S3</h2>
-<div id="cell-9" class="cell" data-execution_count="4">
+<div id="cell-10" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>current_datetime <span class="op">=</span> datetime.now().strftime(<span class="st">"%Y-%m-</span><span class="sc">%d</span><span class="st">_%H-%M-%S"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>results_store <span class="op">=</span> (</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"s3://nasa-eodc-data-store/tile-benchmarking-results/</span><span class="sc">{</span>current_datetime<span class="sc">}</span><span class="ss">/"</span></span>
@@ -979,11 +984,11 @@ upload: results/20240816191458_CMRTileTest_C1996881146-POCLOUD_stats_history.csv
 </section>
 <section id="plot-results" class="level2">
 <h2 class="anchored" data-anchor-id="plot-results">Plot results</h2>
-<div id="cell-11" class="cell" data-execution_count="5">
+<div id="cell-12" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cmap <span class="op">=</span> [<span class="st">"#E1BE6A"</span>, <span class="st">"#40B0A6"</span>]</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>plt_opts <span class="op">=</span> {<span class="st">"width"</span>: <span class="dv">1800</span>, <span class="st">"height"</span>: <span class="dv">400</span>, <span class="st">"xrotation"</span>: <span class="dv">90</span>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-12" class="cell" data-execution_count="6">
+<div id="cell-13" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>gpm_imerg[<span class="st">"df"</span>].hvplot.box(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">"Time (s)"</span>,</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    by<span class="op">=</span>[<span class="st">"zoom"</span>, <span class="st">"method"</span>],</span>
@@ -1073,7 +1078,7 @@ BokehUserWarning: ColumnDataSource's columns must be of the same length. Current
 })(window);</script>
 </div>
 </div>
-<div id="cell-13" class="cell" data-execution_count="7">
+<div id="cell-14" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mur_sst[<span class="st">"df"</span>].hvplot.box(</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">"Time (s)"</span>,</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    by<span class="op">=</span>[<span class="st">"zoom"</span>, <span class="st">"method"</span>],</span>
@@ -1749,7 +1754,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.dev/developmentseed/tile-benchmarking&quot;/blob/main/04-cmr-load-tests/01-compare-local-lambda.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/developmentseed/tile-benchmarking&quot;/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.dev/developmentseed/tile-benchmarking&quot;/blob/main/04-cmr-load-tests/01-compare-hub-lambda.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/developmentseed/tile-benchmarking&quot;/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
 </div>

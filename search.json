@@ -367,58 +367,69 @@
     "text": "import json\nimport os\n\ndef merge_json(directory_path, output_filename='all-datasets.json'):\n    merged_data_object = {}\n    \n    for filename in os.listdir(directory_path):\n        if filename.endswith('.json') and filename != output_filename:\n            file_path = os.path.join(directory_path, filename)\n\n            with open(file_path, 'r') as f:\n                data = json.load(f)\n                \n                if isinstance(data, dict):\n                    merged_data_object.update(data)\n\n    with open(output_filename, 'w') as f:\n        json.dump(merged_data_object, f, indent=4)\n        f.close()\n\n# Use the function\nmerge_json('../01-generate-datasets/')"
   },
   {
-    "objectID": "04-cmr-load-tests/01-compare-local-lambda.html",
-    "href": "04-cmr-load-tests/01-compare-local-lambda.html",
-    "title": "Specify file containing results from “local” tests",
+    "objectID": "04-cmr-load-tests/01-compare-hub-lambda.html",
+    "href": "04-cmr-load-tests/01-compare-hub-lambda.html",
+    "title": "Comparing titiler-cmr usage",
     "section": "",
-    "text": "import sys\n\nimport hvplot.pandas  # noqa\nimport pandas as pd\n\nsys.path.append(\"..\")\nimport subprocess\nfrom datetime import datetime\n\nfrom processing import process_locust_results\nfrom tile import generate_locust_urls\n# Define URIs for results from running tile generation tests on the VEDA Hub\ngpm_imerg = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816190529_CMRTileTest_C2723754850-GES_DISC.json\",\n    \"kwargs\": {\"rescale\": \"0,455\", \"colormap_name\": \"coolwarm\", \"output_format\": \"png\"},\n}\nmur_sst = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816191458_CMRTileTest_C1996881146-POCLOUD.json\",\n    \"kwargs\": {\n        \"rescale\": \"271,305\",\n        \"colormap_name\": \"coolwarm\",\n        \"output_format\": \"png\",\n    },\n}\nfor ds in [gpm_imerg, mur_sst]:\n    ds[\"test_id\"] = ds[\"uri\"].split(\"/\")[-1].split(\".\")[0]\n    ds[\"urls_output_file\"] = f\"urls/{ds['test_id']}.csv\"\n    ds[\"results_output\"] = f\"results/{ds['test_id']}\"\n    ds[\"df\"] = generate_locust_urls(ds[\"uri\"], ds[\"urls_output_file\"], **ds[\"kwargs\"])",
+    "text": "This notebook compares tile generation using titiler-cmr on AWS lambda to running titiler-cmr on the VEDA JupyterHub.\nimport sys\n\nimport hvplot.pandas  # noqa\nimport pandas as pd\n\nsys.path.append(\"..\")\nimport subprocess\nfrom datetime import datetime\n\nfrom processing import process_locust_results\nfrom tile import generate_locust_urls",
     "crumbs": [
       "Load testing",
-      "Specify file containing results from \"local\" tests"
+      "Comparing titiler-cmr usage"
     ]
   },
   {
-    "objectID": "04-cmr-load-tests/01-compare-local-lambda.html#use-locust-to-time-tile-generation",
-    "href": "04-cmr-load-tests/01-compare-local-lambda.html#use-locust-to-time-tile-generation",
-    "title": "Specify file containing results from “local” tests",
+    "objectID": "04-cmr-load-tests/01-compare-hub-lambda.html#specify-file-containing-results-from-veda-jupyterhub-tests",
+    "href": "04-cmr-load-tests/01-compare-hub-lambda.html#specify-file-containing-results-from-veda-jupyterhub-tests",
+    "title": "Comparing titiler-cmr usage",
+    "section": "Specify file containing results from VEDA JupyterHub tests",
+    "text": "Specify file containing results from VEDA JupyterHub tests\n\n# Define URIs for results from running tile generation tests on the VEDA Hub\ngpm_imerg = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816190529_CMRTileTest_C2723754850-GES_DISC.json\",\n    \"kwargs\": {\"rescale\": \"0,455\", \"colormap_name\": \"coolwarm\", \"output_format\": \"png\"},\n}\nmur_sst = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816191458_CMRTileTest_C1996881146-POCLOUD.json\",\n    \"kwargs\": {\n        \"rescale\": \"271,305\",\n        \"colormap_name\": \"coolwarm\",\n        \"output_format\": \"png\",\n    },\n}\nfor ds in [gpm_imerg, mur_sst]:\n    ds[\"test_id\"] = ds[\"uri\"].split(\"/\")[-1].split(\".\")[0]\n    ds[\"urls_output_file\"] = f\"urls/{ds['test_id']}.csv\"\n    ds[\"results_output\"] = f\"results/{ds['test_id']}\"\n    ds[\"df\"] = generate_locust_urls(ds[\"uri\"], ds[\"urls_output_file\"], **ds[\"kwargs\"])",
+    "crumbs": [
+      "Load testing",
+      "Comparing titiler-cmr usage"
+    ]
+  },
+  {
+    "objectID": "04-cmr-load-tests/01-compare-hub-lambda.html#use-locust-to-time-tile-generation",
+    "href": "04-cmr-load-tests/01-compare-hub-lambda.html#use-locust-to-time-tile-generation",
+    "title": "Comparing titiler-cmr usage",
     "section": "Use locust to time tile generation",
     "text": "Use locust to time tile generation\n\nfor ds in [gpm_imerg, mur_sst]:\n    command = f\"locust -f locust_titiler_cmr.py --headless --users 1 --iterations 1 --csv {ds['results_output'] } --urls-file {ds['urls_output_file']} --csv-full-history --host https://dev-titiler-cmr.delta-backend.com\"\n    subprocess.call(command, shell=True)",
     "crumbs": [
       "Load testing",
-      "Specify file containing results from \"local\" tests"
+      "Comparing titiler-cmr usage"
     ]
   },
   {
-    "objectID": "04-cmr-load-tests/01-compare-local-lambda.html#process-locust-results-and-combine-with-local-results",
-    "href": "04-cmr-load-tests/01-compare-local-lambda.html#process-locust-results-and-combine-with-local-results",
-    "title": "Specify file containing results from “local” tests",
-    "section": "Process locust results and combine with local results",
-    "text": "Process locust results and combine with local results\n\nfor ds in [gpm_imerg, mur_sst]:\n    locust_df = process_locust_results(ds[\"results_output\"])\n    combined_df = pd.concat([ds[\"df\"], locust_df], axis=0).reset_index()\n    combined_df[\"Time (s)\"] = combined_df[\"Response Time\"] * 1e-3\n    combined_df[\"concept_id\"] = combined_df.apply(\n        lambda x: x[\"url\"].split(\"?\")[1].split(\"&\")[0].split(\"=\")[1], axis=1\n    )\n    combined_df.to_csv(f\"{ds['results_output']}_combined.csv\")\n    ds[\"df\"] = combined_df[[\"url\", \"method\", \"tile\", \"zoom\", \"concept_id\", \"Time (s)\"]]",
+    "objectID": "04-cmr-load-tests/01-compare-hub-lambda.html#process-locust-results-and-combine-with-jupyterhub-results",
+    "href": "04-cmr-load-tests/01-compare-hub-lambda.html#process-locust-results-and-combine-with-jupyterhub-results",
+    "title": "Comparing titiler-cmr usage",
+    "section": "Process locust results and combine with JupyterHub results",
+    "text": "Process locust results and combine with JupyterHub results\n\nfor ds in [gpm_imerg, mur_sst]:\n    locust_df = process_locust_results(ds[\"results_output\"])\n    combined_df = pd.concat([ds[\"df\"], locust_df], axis=0).reset_index()\n    combined_df[\"Time (s)\"] = combined_df[\"Response Time\"] * 1e-3\n    combined_df[\"concept_id\"] = combined_df.apply(\n        lambda x: x[\"url\"].split(\"?\")[1].split(\"&\")[0].split(\"=\")[1], axis=1\n    )\n    combined_df.to_csv(f\"{ds['results_output']}_combined.csv\")\n    ds[\"df\"] = combined_df[[\"url\", \"method\", \"tile\", \"zoom\", \"concept_id\", \"Time (s)\"]]",
     "crumbs": [
       "Load testing",
-      "Specify file containing results from \"local\" tests"
+      "Comparing titiler-cmr usage"
     ]
   },
   {
-    "objectID": "04-cmr-load-tests/01-compare-local-lambda.html#upload-results-to-s3",
-    "href": "04-cmr-load-tests/01-compare-local-lambda.html#upload-results-to-s3",
-    "title": "Specify file containing results from “local” tests",
+    "objectID": "04-cmr-load-tests/01-compare-hub-lambda.html#upload-results-to-s3",
+    "href": "04-cmr-load-tests/01-compare-hub-lambda.html#upload-results-to-s3",
+    "title": "Comparing titiler-cmr usage",
     "section": "Upload results to S3",
     "text": "Upload results to S3\n\ncurrent_datetime = datetime.now().strftime(\"%Y-%m-%d_%H-%M-%S\")\nresults_store = (\n    f\"s3://nasa-eodc-data-store/tile-benchmarking-results/{current_datetime}/\"\n)\nsubprocess.run(\n    [\n        \"aws\",\n        \"s3\",\n        \"cp\",\n        \"results/\",\n        results_store,\n        \"--recursive\",\n        \"--exclude\",\n        \"*\",\n        \"--include\",\n        \"*.csv\",\n    ]\n)\n\nupload: results/20240816190529_CMRTileTest_C2723754850-GES_DISC_exceptions.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816190529_CMRTileTest_C2723754850-GES_DISC_exceptions.csv\nupload: results/20240816191458_CMRTileTest_C1996881146-POCLOUD_failures.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816191458_CMRTileTest_C1996881146-POCLOUD_failures.csv\nupload: results/20240816191458_CMRTileTest_C1996881146-POCLOUD_exceptions.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816191458_CMRTileTest_C1996881146-POCLOUD_exceptions.csv\nupload: results/20240816190529_CMRTileTest_C2723754850-GES_DISC_failures.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816190529_CMRTileTest_C2723754850-GES_DISC_failures.csv\nupload: results/20240816190529_CMRTileTest_C2723754850-GES_DISC_stats.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816190529_CMRTileTest_C2723754850-GES_DISC_stats.csv\nupload: results/.ipynb_checkpoints/20240816191458_CMRTileTest_C1996881146-POCLOUD_stats-checkpoint.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/.ipynb_checkpoints/20240816191458_CMRTileTest_C1996881146-POCLOUD_stats-checkpoint.csv\nupload: results/20240816191458_CMRTileTest_C1996881146-POCLOUD_stats.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816191458_CMRTileTest_C1996881146-POCLOUD_stats.csv\nupload: results/.ipynb_checkpoints/20240816190529_CMRTileTest_C2723754850-GES_DISC_stats-checkpoint.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/.ipynb_checkpoints/20240816190529_CMRTileTest_C2723754850-GES_DISC_stats-checkpoint.csv\nupload: results/20240816190529_CMRTileTest_C2723754850-GES_DISC_combined.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816190529_CMRTileTest_C2723754850-GES_DISC_combined.csv\nupload: results/20240816191458_CMRTileTest_C1996881146-POCLOUD_combined.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816191458_CMRTileTest_C1996881146-POCLOUD_combined.csv\nupload: results/20240816190529_CMRTileTest_C2723754850-GES_DISC_stats_history.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816190529_CMRTileTest_C2723754850-GES_DISC_stats_history.csv\nupload: results/20240816191458_CMRTileTest_C1996881146-POCLOUD_stats_history.csv to s3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/20240816191458_CMRTileTest_C1996881146-POCLOUD_stats_history.csv\n\n\nCompletedProcess(args=['aws', 's3', 'cp', 'results/', 's3://nasa-eodc-data-store/tile-benchmarking-results/2024-08-16_21-37-27/', '--recursive', '--exclude', '*', '--include', '*.csv'], returncode=0)",
     "crumbs": [
       "Load testing",
-      "Specify file containing results from \"local\" tests"
+      "Comparing titiler-cmr usage"
     ]
   },
   {
-    "objectID": "04-cmr-load-tests/01-compare-local-lambda.html#plot-results",
-    "href": "04-cmr-load-tests/01-compare-local-lambda.html#plot-results",
-    "title": "Specify file containing results from “local” tests",
+    "objectID": "04-cmr-load-tests/01-compare-hub-lambda.html#plot-results",
+    "href": "04-cmr-load-tests/01-compare-hub-lambda.html#plot-results",
+    "title": "Comparing titiler-cmr usage",
     "section": "Plot results",
     "text": "Plot results\n\ncmap = [\"#E1BE6A\", \"#40B0A6\"]\nplt_opts = {\"width\": 1800, \"height\": 400, \"xrotation\": 90}\n\n\ngpm_imerg[\"df\"].hvplot.box(\n    y=\"Time (s)\",\n    by=[\"zoom\", \"method\"],\n    c=\"method\",\n    cmap=cmap,\n    ylabel=\"Response time (s)\",\n    xlabel=\"Zoom level\",\n    legend=False,\n).opts(**plt_opts)\n\nBokehUserWarning: ColumnDataSource's columns must be of the same length. Current lengths: ('Time (s)', 31), ('Time_left_parenthesis_s_right_parenthesis', 0), ('index', 31)\nBokehUserWarning: ColumnDataSource's columns must be of the same length. Current lengths: ('Time (s)', 31), ('Time_left_parenthesis_s_right_parenthesis', 0), ('index', 31)\n\n\n\n\n\n\n  \n\n\n\n\n\nmur_sst[\"df\"].hvplot.box(\n    y=\"Time (s)\",\n    by=[\"zoom\", \"method\"],\n    c=\"method\",\n    cmap=cmap,\n    ylabel=\"Response time (s)\",\n    xlabel=\"Zoom level\",\n    legend=False,\n).opts(**plt_opts)\n\nBokehUserWarning: ColumnDataSource's columns must be of the same length. Current lengths: ('Time (s)', 25), ('Time_left_parenthesis_s_right_parenthesis', 0), ('index', 25)\nBokehUserWarning: ColumnDataSource's columns must be of the same length. Current lengths: ('Time (s)', 25), ('Time_left_parenthesis_s_right_parenthesis', 0), ('index', 25)",
     "crumbs": [
       "Load testing",
-      "Specify file containing results from \"local\" tests"
+      "Comparing titiler-cmr usage"
     ]
   },
   {
