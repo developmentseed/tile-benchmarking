@@ -38,6 +38,7 @@ website:
           - 03-e2e/compare-dev-feature.ipynb
           - 03-e2e/compare-prod-dev.ipynb
           - 04-cmr-load-tests/01-compare-hub-lambda.ipynb
+          - 04-cmr-load-tests/02-compare-lambda-concurrency.ipynb
 
 format:
   html:
