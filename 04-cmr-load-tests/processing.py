@@ -40,14 +40,20 @@ def split_aggregated_results(df, full_df):
     return df
 
 
-def process_locust_results(results_location):
+def process_locust_results(
+    results_location, run_id: str = "0", split_aggregated: bool = True
+):
     """Load locust results and extract relevant information"""
     df = pd.read_csv(f"{results_location}_stats.csv")
     full_results = pd.read_csv(f"{results_location}_stats_history.csv")
     df = df[df["Type"] == "GET"]
-    df = split_aggregated_results(df, full_results)
+    if split_aggregated:
+        df = split_aggregated_results(df, full_results)
     df["zoom"] = df.apply(lambda x: int(x["Name"].split("?")[0].split("/")[3]), axis=1)
-    df["tile"] = df.apply(lambda x: x["Name"].split("?")[0].split("/")[3:6], axis=1)
+    df["tile"] = df.apply(
+        lambda x: x["Name"].split("?")[0].split("/")[3:6], axis=1
+    ).astype("str")
     df = df.rename(columns={"Name": "url"})
     df["method"] = "AWS Lambda"
+    df["run_id"] = run_id
     return df
