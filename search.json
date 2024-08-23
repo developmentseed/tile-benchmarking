@@ -371,42 +371,66 @@
     "href": "04-cmr-load-tests/02-compare-lambda-concurrency.html",
     "title": "Comparing titiler-cmr usage against AWS lambda concurrency limits",
     "section": "",
-    "text": "This notebook compares tile generation using titiler-cmr on AWS lambda against the concurrency limits.\nimport sys\n\nimport hvplot.pandas  # noqa\nimport pandas as pd\n\nsys.path.append(\"..\")\nimport subprocess\nfrom datetime import datetime\n\nfrom processing import process_locust_results\nfrom tile import generate_locust_urls"
+    "text": "This notebook compares tile generation using titiler-cmr on AWS lambda against the concurrency limits.\nimport sys\n\nimport hvplot.pandas  # noqa\nimport pandas as pd\n\nsys.path.append(\"..\")\nimport subprocess\nfrom datetime import datetime\n\nfrom processing import process_locust_results\nfrom tile import generate_locust_urls",
+    "crumbs": [
+      "Load testing",
+      "Comparing titiler-cmr usage against AWS lambda concurrency limits"
+    ]
   },
   {
     "objectID": "04-cmr-load-tests/02-compare-lambda-concurrency.html#specify-file-containing-results-from-veda-jupyterhub-tests",
     "href": "04-cmr-load-tests/02-compare-lambda-concurrency.html#specify-file-containing-results-from-veda-jupyterhub-tests",
     "title": "Comparing titiler-cmr usage against AWS lambda concurrency limits",
     "section": "Specify file containing results from VEDA JupyterHub tests",
-    "text": "Specify file containing results from VEDA JupyterHub tests\nWe’ll run the tests twice, first with the default unreserved concurrency limits and second with a reserved concurrency limit of 50.\n\n# Define URIs for results from running tile generation tests on the VEDA Hub\ngpm_imerg = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816190529_CMRTileTest_C2723754850-GES_DISC.json\",\n    \"kwargs\": {\"rescale\": \"0,455\", \"colormap_name\": \"coolwarm\", \"output_format\": \"png\"},\n}\nmur_sst = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816191458_CMRTileTest_C1996881146-POCLOUD.json\",\n    \"kwargs\": {\n        \"rescale\": \"271,305\",\n        \"colormap_name\": \"coolwarm\",\n        \"output_format\": \"png\",\n    },\n}\ntest_id_suffix = \"_reserved_concurrency\"\nfor ds in [gpm_imerg, mur_sst]:\n    ds[\"test_id\"] = ds[\"uri\"].split(\"/\")[-1].split(\".\")[0]\n    ds[\"urls_output_file\"] = f\"urls/{ds['test_id']}{test_id_suffix}.csv\"\n    ds[\"results_output\"] = f\"results/{ds['test_id']}{test_id_suffix}\"\n    ds[\"df\"] = generate_locust_urls(\n        ds[\"uri\"], ds[\"urls_output_file\"], **ds[\"kwargs\"], subset=slice(0, 50)\n    )"
+    "text": "Specify file containing results from VEDA JupyterHub tests\nWe’ll run the tests twice, first with the default unreserved concurrency limits and second with a reserved concurrency limit of 50.\n\n# Define URIs for results from running tile generation tests on the VEDA Hub\ngpm_imerg = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816190529_CMRTileTest_C2723754850-GES_DISC.json\",\n    \"kwargs\": {\"rescale\": \"0,455\", \"colormap_name\": \"coolwarm\", \"output_format\": \"png\"},\n}\nmur_sst = {\n    \"uri\": \"s3://nasa-eodc-data-store/test-results/20240816191458_CMRTileTest_C1996881146-POCLOUD.json\",\n    \"kwargs\": {\n        \"rescale\": \"271,305\",\n        \"colormap_name\": \"coolwarm\",\n        \"output_format\": \"png\",\n    },\n}\ntest_id_suffix = \"_reserved_concurrency\"\nfor ds in [gpm_imerg, mur_sst]:\n    ds[\"test_id\"] = ds[\"uri\"].split(\"/\")[-1].split(\".\")[0]\n    ds[\"urls_output_file\"] = f\"urls/{ds['test_id']}{test_id_suffix}.csv\"\n    ds[\"results_output\"] = f\"results/{ds['test_id']}{test_id_suffix}\"\n    ds[\"df\"] = generate_locust_urls(\n        ds[\"uri\"], ds[\"urls_output_file\"], **ds[\"kwargs\"], subset=slice(0, 50)\n    )",
+    "crumbs": [
+      "Load testing",
+      "Comparing titiler-cmr usage against AWS lambda concurrency limits"
+    ]
   },
   {
     "objectID": "04-cmr-load-tests/02-compare-lambda-concurrency.html#use-locust-to-time-tile-generation",
     "href": "04-cmr-load-tests/02-compare-lambda-concurrency.html#use-locust-to-time-tile-generation",
     "title": "Comparing titiler-cmr usage against AWS lambda concurrency limits",
     "section": "Use locust to time tile generation",
-    "text": "Use locust to time tile generation\n\nfor ds in [gpm_imerg, mur_sst]:\n    command = [\n        \"locust\",\n        \"-f\",\n        \"locust_titiler_cmr.py\",\n        \"--headless\",\n        \"--users\",\n        \"100\",\n        \"--iterations\",\n        \"100\",\n        \"--csv\",\n        ds[\"results_output\"],\n        \"--urls-file\",\n        ds[\"urls_output_file\"],\n        \"--csv-full-history\",\n        \"--host\",\n        \"https://dev-titiler-cmr.delta-backend.com\",\n    ]\n    subprocess.run(command)"
+    "text": "Use locust to time tile generation\n\nfor ds in [gpm_imerg, mur_sst]:\n    command = [\n        \"locust\",\n        \"-f\",\n        \"locust_titiler_cmr.py\",\n        \"--headless\",\n        \"--users\",\n        \"100\",\n        \"--iterations\",\n        \"100\",\n        \"--csv\",\n        ds[\"results_output\"],\n        \"--urls-file\",\n        ds[\"urls_output_file\"],\n        \"--csv-full-history\",\n        \"--host\",\n        \"https://dev-titiler-cmr.delta-backend.com\",\n    ]\n    subprocess.run(command)",
+    "crumbs": [
+      "Load testing",
+      "Comparing titiler-cmr usage against AWS lambda concurrency limits"
+    ]
   },
   {
     "objectID": "04-cmr-load-tests/02-compare-lambda-concurrency.html#process-locust-results",
     "href": "04-cmr-load-tests/02-compare-lambda-concurrency.html#process-locust-results",
     "title": "Comparing titiler-cmr usage against AWS lambda concurrency limits",
     "section": "Process locust results",
-    "text": "Process locust results\n\nfor ds in [gpm_imerg, mur_sst]:\n    df_reserved = process_locust_results(\n        f\"results/{ds['test_id']}_reserved_concurrency\",\n        run_id=\"reserved\",\n        split_aggregated=False,\n    )\n    df_unreserved = process_locust_results(\n        f\"results/{ds['test_id']}_unreserved_concurrency\",\n        run_id=\"unreserved\",\n        split_aggregated=False,\n    )\n    combined_df = pd.concat([df_reserved, df_unreserved], axis=0).reset_index()\n    columns = [\n        \"Average Response Time\",\n        \"Median Response Time\",\n        \"Min Response Time\",\n        \"Max Response Time\",\n    ]\n    for ind, c in enumerate(columns):\n        combined_df[f\"{c} (s)\"] = combined_df[c] * 1e-3\n        columns[ind] = f\"{c} (s)\"\n    combined_df[\"concept_id\"] = combined_df.apply(\n        lambda x: x[\"url\"].split(\"?\")[1].split(\"&\")[0].split(\"=\")[1], axis=1\n    )\n    combined_df.to_csv(f\"{ds['results_output']}_combined.csv\")\n    ds[\"df\"] = combined_df[\n        [\n            \"url\",\n            \"method\",\n            \"tile\",\n            \"zoom\",\n            \"run_id\",\n            \"concept_id\",\n            \"Request Count\",\n            \"Failure Count\",\n            *columns,\n            \"Average Content Size\",\n        ]\n    ]"
+    "text": "Process locust results\n\nfor ds in [gpm_imerg, mur_sst]:\n    df_reserved = process_locust_results(\n        f\"results/{ds['test_id']}_reserved_concurrency\",\n        run_id=\"reserved\",\n        split_aggregated=False,\n    )\n    df_unreserved = process_locust_results(\n        f\"results/{ds['test_id']}_unreserved_concurrency\",\n        run_id=\"unreserved\",\n        split_aggregated=False,\n    )\n    combined_df = pd.concat([df_reserved, df_unreserved], axis=0).reset_index()\n    columns = [\n        \"Average Response Time\",\n        \"Median Response Time\",\n        \"Min Response Time\",\n        \"Max Response Time\",\n    ]\n    for ind, c in enumerate(columns):\n        combined_df[f\"{c} (s)\"] = combined_df[c] * 1e-3\n        columns[ind] = f\"{c} (s)\"\n    combined_df[\"concept_id\"] = combined_df.apply(\n        lambda x: x[\"url\"].split(\"?\")[1].split(\"&\")[0].split(\"=\")[1], axis=1\n    )\n    combined_df.to_csv(f\"{ds['results_output']}_combined.csv\")\n    ds[\"df\"] = combined_df[\n        [\n            \"url\",\n            \"method\",\n            \"tile\",\n            \"zoom\",\n            \"run_id\",\n            \"concept_id\",\n            \"Request Count\",\n            \"Failure Count\",\n            *columns,\n            \"Average Content Size\",\n        ]\n    ]",
+    "crumbs": [
+      "Load testing",
+      "Comparing titiler-cmr usage against AWS lambda concurrency limits"
+    ]
   },
   {
     "objectID": "04-cmr-load-tests/02-compare-lambda-concurrency.html#upload-results-to-s3",
     "href": "04-cmr-load-tests/02-compare-lambda-concurrency.html#upload-results-to-s3",
     "title": "Comparing titiler-cmr usage against AWS lambda concurrency limits",
     "section": "Upload results to S3",
-    "text": "Upload results to S3\n\ncurrent_datetime = datetime.now().strftime(\"%Y-%m-%d_%H-%M-%S\")\nresults_store = (\n    f\"s3://nasa-eodc-data-store/tile-benchmarking-results/{current_datetime}/\"\n)\nsubprocess.run(\n    [\n        \"aws\",\n        \"s3\",\n        \"cp\",\n        \"results/\",\n        results_store,\n        \"--recursive\",\n        \"--exclude\",\n        \"*\",\n        \"--include\",\n        f\"{ds['test_id']}{test_id_suffix}*.csv\",\n    ]\n)"
+    "text": "Upload results to S3\n\ncurrent_datetime = datetime.now().strftime(\"%Y-%m-%d_%H-%M-%S\")\nresults_store = (\n    f\"s3://nasa-eodc-data-store/tile-benchmarking-results/{current_datetime}/\"\n)\nsubprocess.run(\n    [\n        \"aws\",\n        \"s3\",\n        \"cp\",\n        \"results/\",\n        results_store,\n        \"--recursive\",\n        \"--exclude\",\n        \"*\",\n        \"--include\",\n        f\"{ds['test_id']}{test_id_suffix}*.csv\",\n    ]\n)",
+    "crumbs": [
+      "Load testing",
+      "Comparing titiler-cmr usage against AWS lambda concurrency limits"
+    ]
   },
   {
     "objectID": "04-cmr-load-tests/02-compare-lambda-concurrency.html#plot-results",
     "href": "04-cmr-load-tests/02-compare-lambda-concurrency.html#plot-results",
     "title": "Comparing titiler-cmr usage against AWS lambda concurrency limits",
     "section": "Plot results",
-    "text": "Plot results\n\nShow failure rates for unreserved concurrency (~1000) versus reserved concurrency (50) for GPM IMERG\nThese results show that for a simulation of 100 users each requesting one tile at a time, roughly half of the requests will fail when the AWS Lambda is configured with a reserved concurrency of 50. The default AWS Lambda concurrency setting is 1000 concurrent executions across all functions in an account in an AWS region, although a quota increase can be requested. The concurrency limit bounds the scalability of titiler-cmr.\n\nsummary_df = (\n    gpm_imerg[\"df\"].groupby([\"run_id\"])[[\"Request Count\", \"Failure Count\"]].agg(\"sum\")\n)\nsummary_df[\"Failure Rate (%)\"] = (\n    summary_df[\"Failure Count\"] / summary_df[\"Request Count\"] * 100\n)\nsummary_df.hvplot.bar(\n    x=\"run_id\",\n    y=\"Failure Rate (%)\",\n    xlabel=\"Lambda concurrency setting\",\n    ylim=(0, 100),\n    title=\"GPM IMERG\",\n)\n\n\n\n\n\n  \n\n\n\n\n\n\nShow failure rates for unreserved concurrency (~1000) versus reserved concurrency (50) for MUR SST\n\nsummary_df = (\n    mur_sst[\"df\"].groupby([\"run_id\"])[[\"Request Count\", \"Failure Count\"]].agg(\"sum\")\n)\nsummary_df[\"Failure Rate (%)\"] = (\n    summary_df[\"Failure Count\"] / summary_df[\"Request Count\"] * 100\n)\nsummary_df.hvplot.bar(\n    x=\"run_id\",\n    y=\"Failure Rate (%)\",\n    xlabel=\"Lambda concurrency setting\",\n    ylim=(0, 100),\n    title=\"MUR SST\",\n)"
+    "text": "Plot results\n\nShow failure rates for unreserved concurrency (~1000) versus reserved concurrency (50) for GPM IMERG\nThese results show that for a simulation of 100 users each requesting one tile at a time, roughly half of the requests will fail when the AWS Lambda is configured with a reserved concurrency of 50. The default AWS Lambda concurrency setting is 1000 concurrent executions across all functions in an account in an AWS region, although a quota increase can be requested. The concurrency limit bounds the scalability of titiler-cmr.\n\nsummary_df = (\n    gpm_imerg[\"df\"].groupby([\"run_id\"])[[\"Request Count\", \"Failure Count\"]].agg(\"sum\")\n)\nsummary_df[\"Failure Rate (%)\"] = (\n    summary_df[\"Failure Count\"] / summary_df[\"Request Count\"] * 100\n)\nsummary_df.hvplot.bar(\n    x=\"run_id\",\n    y=\"Failure Rate (%)\",\n    xlabel=\"Lambda concurrency setting\",\n    ylim=(0, 100),\n    title=\"GPM IMERG\",\n)\n\n\n\n\n\n  \n\n\n\n\n\n\nShow failure rates for unreserved concurrency (~1000) versus reserved concurrency (50) for MUR SST\n\nsummary_df = (\n    mur_sst[\"df\"].groupby([\"run_id\"])[[\"Request Count\", \"Failure Count\"]].agg(\"sum\")\n)\nsummary_df[\"Failure Rate (%)\"] = (\n    summary_df[\"Failure Count\"] / summary_df[\"Request Count\"] * 100\n)\nsummary_df.hvplot.bar(\n    x=\"run_id\",\n    y=\"Failure Rate (%)\",\n    xlabel=\"Lambda concurrency setting\",\n    ylim=(0, 100),\n    title=\"MUR SST\",\n)",
+    "crumbs": [
+      "Load testing",
+      "Comparing titiler-cmr usage against AWS lambda concurrency limits"
+    ]
   },
   {
     "objectID": "03-e2e/compare-prod-dev.html",
