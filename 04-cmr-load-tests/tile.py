@@ -37,7 +37,9 @@ def get_tile_path(
     return f"/tiles/{tms}/{z}/{x}/{y}?{query}"
 
 
-def generate_locust_urls(uri, output_file, **kwargs):
+def generate_locust_urls(
+    uri, output_file, *, write_output: bool = True, subset=None, **kwargs
+):
     credentials = eodc_hub_role.fetch_and_set_credentials()
     df = dataframe_helpers.load_all_into_dataframe(credentials, [uri], use_boto3=False)
     df = dataframe_helpers.expand_timings(df).reset_index()
@@ -51,5 +53,9 @@ def generate_locust_urls(uri, output_file, **kwargs):
         axis=1,
     )
     df = df[["url", "Response Time", "method", "tile", "zoom"]]
-    df["url"].to_csv(output_file, index=False, header=False)
+
+    if subset:
+        df = df[subset]
+    if write_output:
+        df["url"].to_csv(output_file, index=False, header=False)
     return df
