@@ -29,6 +29,9 @@ cdk.context.json
 *cache*
 downloaded*results
 
+02-run-tests/results-memray
+02-run-tests/memray-stats
+02-run-tests/memray-flamegraph
 04-cmr-load-tests/results
 04-cmr-load-tests/urls
 
