@@ -61,56 +61,75 @@ def generate_memray_flamegraphs(results_dir, output_dir):
         )
 
 
-def process_memray_summaries(summary_dir):
-    df = pd.DataFrame(
-        columns=[
-            "output_file",
-            "dataset",
-            "test_id",
-            "zoom",
-            "run_id",
-            "x",
-            "y",
-            "peak memory (GB)",
-        ]
-    )
+def get_files(summary_dir):
     fs = fsspec.filesystem("file")
-    files = fs.glob(f"{summary_dir}/CMRTileTest*")
-    for ind, file in enumerate(files):
-        results_base = file.split("/")[-1]
-        if "GES_DISC" in results_base:
-            (
-                df.loc[ind, "test_id"],
-                df.loc[ind, "dataset"],
-                _,
-                df.loc[ind, "run_id"],
-                df.loc[ind, "x"],
-                df.loc[ind, "y"],
-                df.loc[ind, "zoom"],
-            ) = results_base.split("_")
-        else:
-            (
-                df.loc[ind, "test_id"],
-                df.loc[ind, "dataset"],
-                df.loc[ind, "run_id"],
-                df.loc[ind, "x"],
-                df.loc[ind, "y"],
-                df.loc[ind, "zoom"],
-            ) = results_base.split("_")
-        df.loc[ind, "dataset"] = df.loc[ind, "dataset"].split("-")[0]
-        df.loc[ind, "dataset"] = (
-            df.loc[ind, "dataset"]
-            .replace("C1996881146", "MUR SST")
-            .replace("C2723754850", "GPM IMERG")
-        )
-        df.loc[ind, "run_id"] = int(df.loc[ind, "run_id"].strip("run"))
-        df.loc[ind, "x"] = df.loc[ind, "x"].strip("tile")
-        df.loc[ind, "zoom"] = df.loc[ind, "zoom"].strip(".json")
-        df.loc[ind, "output_file"] = f"memray-stats/{results_base}"
-        with open(df.loc[ind, "output_file"], mode="r") as f:
-            data = json.load(f)
-        df.loc[ind, "peak memory (GB)"] = data["metadata"]["peak_memory"] * 1e-9
+    return fs.glob(f"{summary_dir}/CMRTileTest*")
 
+
+def process_function_memory_usage(summary_dir):
+    df = pd.DataFrame()
+    files = get_files(summary_dir)
+    for ind, file in enumerate(files):
+        metadata_df = get_test_info_from_filename(file).set_index("output_file")
+        summary = load_memray_summary(metadata_df.index[0])
+        data_df = pd.DataFrame.from_records(summary["top_allocations_by_size"])
+        data_df["output_file"] = f"memray-stats/{file.split('/')[-1]}"
+        data_df = data_df.set_index("output_file")
+        data_df = data_df.join(metadata_df, how="left")
+        df = pd.concat([df, data_df])
+    df["dataset"] = df["dataset"].apply(lambda x: get_common_name(x))
+    df[["method", "location"]] = df["location"].str.split(":", n=1, expand=True)
+    df["size (GB)"] = df["size"] * 1e-9
+    df = df.drop(columns=["size"])
+    df = df.sort_values(by="size (GB)", axis=0, ascending=False)
+    df = df.reset_index(drop=True)
+    df = df.groupby(by=["zoom", "method", "dataset"]).filter(
+        lambda x: x["size (GB)"].mean() > 1.0
+    )
+    return df
+
+
+def get_common_name(dataset_name):
+    return dataset_name.replace("C1996881146-POCLOUD", "MUR SST").replace(
+        "C2723754850-GES", "GPM IMERG"
+    )
+
+
+def get_test_info_from_filename(filepath):
+    results_base = filepath.split("/")[-1]
+    if "GES_DISC" in results_base:
+        df = pd.DataFrame.from_records(
+            [results_base.split("_")],
+            columns=["test_id", "dataset", "_", "run_id", "x", "y", "zoom"],
+        )
+        df = df.drop(columns=["_"])
+    else:
+        df = pd.DataFrame.from_records(
+            [results_base.split("_")],
+            columns=["test_id", "dataset", "run_id", "x", "y", "zoom"],
+        )
+    df["dataset"] = df["dataset"].apply(lambda x: get_common_name(x))
+    df["run_id"] = df["run_id"].str.strip("run").astype("int")
+    df["x"] = df["x"].str.strip("tile")
+    df["zoom"] = df["zoom"].str.strip(".json")
+    df["output_file"] = f"memray-stats/{results_base}"
+    return df
+
+
+def load_memray_summary(filepath):
+    with open(filepath, mode="r") as f:
+        data = json.load(f)
+    return data
+
+
+def process_peak_memory_usage(summary_dir):
+    df = pd.DataFrame()
+    files = get_files(summary_dir)
+    for ind, file in enumerate(files):
+        metadata_df = get_test_info_from_filename(file)
+        summary = load_memray_summary(metadata_df.loc[0, "output_file"])
+        metadata_df["peak memory (GB)"] = summary["metadata"]["peak_memory"] * 1e-9
+        df = pd.concat([df, metadata_df])
     df["run_id"] = df["run_id"].astype(int)
     df["zoom"] = df["zoom"].astype(int)
     df["peak memory (GB)"] = df["peak memory (GB)"].astype(float)
