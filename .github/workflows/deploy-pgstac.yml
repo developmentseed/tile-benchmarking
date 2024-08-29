@@ -1,9 +1,6 @@
 name: Deploy pgSTAC to AWS
 
 on:
-  push:
-    branches:
-      - main
   # enable a workflow to be triggered manually
   workflow_dispatch:
     inputs:
