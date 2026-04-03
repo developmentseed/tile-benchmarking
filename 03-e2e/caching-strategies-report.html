@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.9.36">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>Caching strategies for titiler-xarray’s xarray.open_dataset – Tile Benchmarking</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -21,8 +24,9 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -33,7 +37,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -57,7 +61,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -66,17 +70,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="../">
 <link href="../03-e2e/compare-dev-feature.html" rel="next">
 <link href="../02-run-tests/06-cmr-netcdf.html" rel="prev">
-<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f418161beb48e0141c760e455f12af2c.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-11f50ae0491fea88427f759fb04538f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-bf4615e12e7809421b55c59060a8def4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-11f50ae0491fea88427f759fb04538f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -104,7 +111,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
@@ -112,7 +119,169 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link rel="stylesheet" href="../styles.css">
 </head>
 
-<body class="nav-sidebar docked">
+<body class="nav-sidebar docked quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -325,6 +494,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
+
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../03-e2e/caching-strategies-report.html">Load testing</a></li><li class="breadcrumb-item"><a href="../03-e2e/caching-strategies-report.html">Caching strategies for titiler-xarray’s xarray.open_dataset</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Caching strategies for titiler-xarray’s xarray.open_dataset</h1>
@@ -358,10 +528,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="max-load-estimate">Max load estimate</h3>
 <p>We estimate a max load of a throughput of 500kb for 185 req/s and 10GB storage for xarray metadata files.</p>
 <div id="a3b8218f-41fd-4799-8c47-70109c612aab" class="cell" data-tags="[]" data-execution_count="1">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>metadata_size_gb <span class="op">=</span> <span class="fl">0.0005</span> <span class="co"># most costs are in GB</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>metadata_size_gb <span class="op">=</span> <span class="fl">0.0005</span> <span class="co"># most costs are in GB</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>max_req_per_sec <span class="op">=</span> <span class="dv">185</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>estimated_storage_metadata_only <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>estimated_storage_files <span class="op">=</span> <span class="dv">1200</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>estimated_storage_files <span class="op">=</span> <span class="dv">1200</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="reasoning" class="level3">
@@ -372,9 +542,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Max requests per second:</strong> GIBS max requests per day are about 16 million which is 185 req/s average (see https://www.earthdata.nasa.gov/eosdis/system-performance-and-metrics/esdis-metrics/esdis-weekly-metrics/esdis-weekly-metrics-october-9-2023)</li>
 </ul>
 <div id="eccafcf0-7e52-420d-b83f-9df3f2a90c17" class="cell" data-tags="[]" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check max_reqmax_req_per_sec == max gibs req/s</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check max_reqmax_req_per_sec == max gibs req/s</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>max_daily_gibs_req <span class="op">=</span> <span class="fl">16e6</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span>(max_req_per_sec <span class="op">==</span> <span class="bu">round</span>(max_daily_gibs_req<span class="op">/</span><span class="dv">24</span><span class="op">/</span><span class="dv">60</span><span class="op">/</span><span class="dv">60</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span>(max_req_per_sec <span class="op">==</span> <span class="bu">round</span>(max_daily_gibs_req<span class="op">/</span><span class="dv">24</span><span class="op">/</span><span class="dv">60</span><span class="op">/</span><span class="dv">60</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 </section>
@@ -387,39 +557,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>ephemeral storage (also gb/sec)</li>
 </ul>
 <div id="7fc2d24e-2a57-4c34-8cd2-2b2a6f491b8d" class="cell" data-tags="[]" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>seconds_per_month <span class="op">=</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">24</span> <span class="op">*</span> <span class="dv">30</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>seconds_per_month <span class="op">=</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">24</span> <span class="op">*</span> <span class="dv">30</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>gb_second_cost_runtime <span class="op">=</span> <span class="fl">0.0000166667</span> <span class="co"># Duration is calculated from the time your code begins executing until it returns or otherwise terminates, rounded up to the nearest 1 ms*. The price depends on the amount of memory you allocate to your function.</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># All lambdas were set at the maximum memory (10GB)</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>memory_gb <span class="op">=</span> <span class="dv">10</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># and this cost would be associated with the execution time,</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># so obviously faster execution is cheaper.</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>max_monthly_runtime_cost <span class="op">=</span> gb_second_cost_runtime <span class="op">*</span> memory_gb <span class="op">*</span> seconds_per_month</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly run time cost for lambda: $</span><span class="sc">{</span><span class="bu">round</span>(max_monthly_runtime_cost, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly run time cost for lambda: $</span><span class="sc">{</span><span class="bu">round</span>(max_monthly_runtime_cost, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Estimated monthly run time cost for lambda: $432.0</code></pre>
 </div>
 </div>
 <div id="a6736254-6013-44c9-aea0-74973914dde5" class="cell" data-tags="[]" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>cost_per_million_requests <span class="op">=</span> <span class="fl">0.2</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>cost_per_million_requests <span class="op">=</span> <span class="fl">0.2</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>max_requests_per_month <span class="op">=</span> max_daily_gibs_req <span class="op">*</span> <span class="dv">30</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>max_monthly_requests_costs <span class="op">=</span> cost_per_million_requests <span class="op">*</span> max_requests_per_month<span class="op">/</span><span class="fl">1e6</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly requests cost for lambda: $</span><span class="sc">{</span><span class="bu">round</span>(max_monthly_requests_costs, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly requests cost for lambda: $</span><span class="sc">{</span><span class="bu">round</span>(max_monthly_requests_costs, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Estimated monthly requests cost for lambda: $96.0</code></pre>
 </div>
 </div>
 <div id="859fa620-9351-447a-831a-9c28f8258198" class="cell" data-tags="[]" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>gb_second_cost_storage <span class="op">=</span> <span class="fl">0.0000000309</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>gb_second_cost_storage <span class="op">=</span> <span class="fl">0.0000000309</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>storage_gb <span class="op">=</span> <span class="dv">10</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>max_monthly_storage_cost <span class="op">=</span> gb_second_cost_storage <span class="op">*</span> seconds_per_month <span class="op">*</span> storage_gb</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost for lambda: $</span><span class="sc">{</span><span class="bu">round</span>(max_monthly_storage_cost, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost for lambda: $</span><span class="sc">{</span><span class="bu">round</span>(max_monthly_storage_cost, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Estimated monthly storage cost for lambda: $0.8</code></pre>
 </div>
 </div>
 <div id="0cf5c462-0246-4f94-8cb6-65329bdea1b2" class="cell" data-tags="[]" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>total_max_monthly_lambda_cost <span class="op">=</span> max_monthly_runtime_cost <span class="op">+</span> max_monthly_requests_costs <span class="op">+</span> max_monthly_storage_cost</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total max monthly cost: $</span><span class="sc">{</span><span class="bu">round</span>(total_max_monthly_lambda_cost, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>total_max_monthly_lambda_cost <span class="op">=</span> max_monthly_runtime_cost <span class="op">+</span> max_monthly_requests_costs <span class="op">+</span> max_monthly_storage_cost</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total max monthly cost: $</span><span class="sc">{</span><span class="bu">round</span>(total_max_monthly_lambda_cost, <span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Total max monthly cost: $528.8</code></pre>
 </div>
@@ -429,22 +599,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="nat-gateway">NAT Gateway</h2>
 <p>For options 2 and 3, a NAT Gateway is required. In order to communicate with the internet, the lambda nees a public IP address. A NAT Gateway provides an IP address for services in a private subnet. The lambda and services it communicates with such as Elasticache and Elastic File System may exist in the same VPC and communicate within that network. But for the lambda to make requests outside of that network, it needs a NAT Gateway. More information is available from AWS: https://repost.aws/knowledge-center/internet-access-lambda-function.</p>
 <div id="3b2bafa1-218e-4ea5-9025-43de238f903a" class="cell" data-tags="[]" data-execution_count="7">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>hrs_per_month <span class="op">=</span> <span class="dv">24</span> <span class="op">*</span> <span class="dv">30</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>hrs_per_month <span class="op">=</span> <span class="dv">24</span> <span class="op">*</span> <span class="dv">30</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>nat_gateway_cost_per_hour <span class="op">=</span> <span class="fl">0.045</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>nat_gateway_run_cost <span class="op">=</span> nat_gateway_cost_per_hour <span class="op">*</span> hrs_per_month</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cost to run nat gateway per month: $</span><span class="sc">{</span>nat_gateway_run_cost<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cost to run nat gateway per month: $</span><span class="sc">{</span>nat_gateway_run_cost<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Cost to run nat gateway per month: $32.4</code></pre>
 </div>
 </div>
 <div id="d26544f2-ad7b-4dfd-a083-34ef2cf504a2" class="cell" data-tags="[]" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Data Transfer OUT From Amazon EC2 To Internet is $0.09 per GB, see https://aws.amazon.com/ec2/pricing/on-demand/</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Data Transfer OUT From Amazon EC2 To Internet is $0.09 per GB, see https://aws.amazon.com/ec2/pricing/on-demand/</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Below we find the maximum average content size is about 1400 bytes, 1.4e-6 GB</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>max_content_size_response_gb <span class="op">=</span> <span class="fl">1.4e-6</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>gb_out_per_month <span class="op">=</span> max_daily_gibs_req <span class="op">*</span> <span class="dv">30</span> <span class="op">*</span> max_content_size_response_gb</span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>cost_per_gb_out <span class="op">=</span> <span class="fl">0.09</span></span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>cost_per_month <span class="op">=</span> gb_out_per_month <span class="op">*</span> cost_per_gb_out</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cost to transfer data out of nat gateway per month: $</span><span class="sc">{</span>cost_per_month<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cost to transfer data out of nat gateway per month: $</span><span class="sc">{</span>cost_per_month<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Cost to transfer data out of nat gateway per month: $60.48</code></pre>
 </div>
@@ -485,7 +655,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>We used the locust library to run performance tests. The test methods and scripts are documented in the <a href="./README.md">README.md</a> in this directory.</p>
 <p>Below, we run tests on the <code>dev</code> branch, deployed to dev-titiler-xarray.delta-backend.com which has no caching implemented.</p>
 <div id="b30c59a5-01eb-4471-8149-0be78374050e" class="cell" data-tags="[]" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> hvplot.pandas</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> holoviews <span class="im">as</span> hv</span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>pd.options.plotting.backend <span class="op">=</span> <span class="st">'holoviews'</span></span>
@@ -495,7 +665,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">'ignore'</span>)</span>
 <span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>sys.path.append(<span class="st">'..'</span>)</span>
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> helpers <span class="im">import</span> dataframe</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> helpers.eodc_hub_role <span class="im">import</span> fetch_and_set_credentials</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> helpers.eodc_hub_role <span class="im">import</span> fetch_and_set_credentials</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <script type="application/javascript">
 (function(root) {
@@ -1039,26 +1209,26 @@ if (window.Jupyter !== undefined) {
 </div>
 </div>
 <div id="7a25cc6d-688b-4057-bf2a-f04fd38c127d" class="cell" data-tags="[]" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>credentials <span class="op">=</span> fetch_and_set_credentials()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>credentials <span class="op">=</span> fetch_and_set_credentials()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="download-results-from-past-tests" class="level2">
 <h2 class="anchored" data-anchor-id="download-results-from-past-tests">Download results from past tests</h2>
 <div id="33756c7a-be9b-43bf-9d6d-450e466476d3" class="cell" data-tags="[]" data-execution_count="11">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>include_exclude_string <span class="op">=</span> <span class="st">'--exclude "*" --include "*_urls_stats.csv"'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>include_exclude_string <span class="op">=</span> <span class="st">'--exclude "*" --include "*_urls_stats.csv"'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="84a78f54-0264-410f-8428-723ff7794a0d" class="cell" data-execution_count="31">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>capture</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>capture</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>rm <span class="op">-</span>rf downloaded_<span class="op">*</span>_results</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 cp <span class="op">--</span>recursive s3:<span class="op">//</span>nasa<span class="op">-</span>eodc<span class="op">-</span>data<span class="op">-</span>store<span class="op">/</span>tile<span class="op">-</span>benchmarking<span class="op">-</span>results<span class="op">/</span>dev_2023<span class="op">-</span><span class="dv">11</span><span class="op">-</span><span class="dv">14_16</span><span class="op">-</span><span class="dv">48</span><span class="op">-</span><span class="dv">0</span><span class="er">9</span><span class="op">/</span> downloaded_dev_results<span class="op">/</span> {include_exclude_string}</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 cp <span class="op">--</span>recursive s3:<span class="op">//</span>nasa<span class="op">-</span>eodc<span class="op">-</span>data<span class="op">-</span>store<span class="op">/</span>tile<span class="op">-</span>benchmarking<span class="op">-</span>results<span class="op">/</span>feature2_2023<span class="op">-</span><span class="dv">11</span><span class="op">-</span><span class="dv">14_16</span><span class="op">-</span><span class="dv">49</span><span class="op">-</span><span class="dv">0</span><span class="er">9</span><span class="op">/</span> downloaded_feature2_results<span class="op">/</span> {include_exclude_string}</span>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 cp <span class="op">--</span>recursive s3:<span class="op">//</span>nasa<span class="op">-</span>eodc<span class="op">-</span>data<span class="op">-</span>store<span class="op">/</span>tile<span class="op">-</span>benchmarking<span class="op">-</span>results<span class="op">/</span>feature3_2023<span class="op">-</span><span class="dv">11</span><span class="op">-</span><span class="dv">14_16</span><span class="op">-</span><span class="dv">49</span><span class="op">-</span><span class="dv">56</span><span class="op">/</span> downloaded_feature3_results<span class="op">/</span> {include_exclude_string}</span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 cp <span class="op">--</span>recursive s3:<span class="op">//</span>nasa<span class="op">-</span>eodc<span class="op">-</span>data<span class="op">-</span>store<span class="op">/</span>tile<span class="op">-</span>benchmarking<span class="op">-</span>results<span class="op">/</span>dev_2023<span class="op">-</span><span class="dv">11</span><span class="op">-</span><span class="dv">14_01</span><span class="op">-</span><span class="dv">54</span><span class="op">-</span><span class="dv">47</span><span class="op">/</span> downloaded_dev_results<span class="op">/</span> {include_exclude_string}</span>
 <span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 cp <span class="op">--</span>recursive s3:<span class="op">//</span>nasa<span class="op">-</span>eodc<span class="op">-</span>data<span class="op">-</span>store<span class="op">/</span>tile<span class="op">-</span>benchmarking<span class="op">-</span>results<span class="op">/</span>feature2_2023<span class="op">-</span><span class="dv">11</span><span class="op">-</span><span class="dv">14_01</span><span class="op">-</span><span class="dv">56</span><span class="op">-</span><span class="dv">23</span><span class="op">/</span> downloaded_feature2_results<span class="op">/</span> {include_exclude_string}</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 cp <span class="op">--</span>recursive s3:<span class="op">//</span>nasa<span class="op">-</span>eodc<span class="op">-</span>data<span class="op">-</span>store<span class="op">/</span>tile<span class="op">-</span>benchmarking<span class="op">-</span>results<span class="op">/</span>feature3_2023<span class="op">-</span><span class="dv">11</span><span class="op">-</span><span class="dv">14_01</span><span class="op">-</span><span class="dv">59</span><span class="op">-</span><span class="dv">35</span><span class="op">/</span> downloaded_feature3_results<span class="op">/</span> {include_exclude_string} </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 cp <span class="op">--</span>recursive s3:<span class="op">//</span>nasa<span class="op">-</span>eodc<span class="op">-</span>data<span class="op">-</span>store<span class="op">/</span>tile<span class="op">-</span>benchmarking<span class="op">-</span>results<span class="op">/</span>feature3_2023<span class="op">-</span><span class="dv">11</span><span class="op">-</span><span class="dv">14_01</span><span class="op">-</span><span class="dv">59</span><span class="op">-</span><span class="dv">35</span><span class="op">/</span> downloaded_feature3_results<span class="op">/</span> {include_exclude_string} </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="c34030d7-e645-4b91-b72e-42cb18cd4594" class="cell" data-tags="[]" data-execution_count="32">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> { <span class="st">'feature3'</span>: {}, <span class="st">'feature2'</span>: {}, <span class="st">'dev'</span>: {} }</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> { <span class="st">'feature3'</span>: {}, <span class="st">'feature2'</span>: {}, <span class="st">'dev'</span>: {} }</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> read_results(env: <span class="bu">str</span> <span class="op">=</span> <span class="st">"dev"</span>):</span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Specify the directory path and the suffix</span></span>
@@ -1082,15 +1252,15 @@ if (window.Jupyter !== undefined) {
 <span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>    results[env][<span class="st">'all'</span>] <span class="op">=</span> merged_df</span>
 <span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The "Aggregated" results represent aggregations across tile endpoints. </span></span>
 <span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>    results[env][<span class="ss">f'Aggregated </span><span class="sc">{</span>env<span class="sc">}</span><span class="ss">'</span>] <span class="op">=</span> merged_df[merged_df[<span class="st">'Name'</span>] <span class="op">==</span> <span class="st">'Aggregated'</span>]</span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> results</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="de921f34-2365-4eb7-be31-b40e4452da36" class="cell" data-tags="[]" data-execution_count="33">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>read_results()[<span class="st">'dev'</span>][<span class="st">'Aggregated dev'</span>].drop(columns<span class="op">=</span>[<span class="st">'Type'</span>, <span class="st">'Name'</span>, <span class="st">'file'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>read_results()[<span class="st">'dev'</span>][<span class="st">'Aggregated dev'</span>].drop(columns<span class="op">=</span>[<span class="st">'Type'</span>, <span class="st">'Name'</span>, <span class="st">'file'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="33">
 <div>
 
 
-<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -1119,7 +1289,7 @@ if (window.Jupyter !== undefined) {
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>1500.633718</td>
@@ -1143,7 +1313,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat2896_lon5792.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>38</td>
 <td>38</td>
 <td>53.000000</td>
@@ -1167,7 +1337,7 @@ if (window.Jupyter !== undefined) {
 <td>GLDAS_NOAH025_3H.A20230731.2100.021.nc4</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>500.000000</td>
@@ -1191,7 +1361,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat4096_lon8192.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>50</td>
 <td>0</td>
 <td>500.000000</td>
@@ -1215,7 +1385,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat1448_lon2896.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>510.000000</td>
@@ -1239,7 +1409,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat5793_lon11586.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>410.000000</td>
@@ -1263,7 +1433,7 @@ if (window.Jupyter !== undefined) {
 <td>pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>470.000000</td>
@@ -1287,7 +1457,7 @@ if (window.Jupyter !== undefined) {
 <td>power_901_monthly_meteorology_utc.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>480.000000</td>
@@ -1311,7 +1481,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat2048_lon4096.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>47</td>
 <td>0</td>
 <td>440.000000</td>
@@ -1335,7 +1505,7 @@ if (window.Jupyter !== undefined) {
 <td>aws-noaa-oisst-feedstock_reference</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>43</td>
 <td>0</td>
 <td>270.000000</td>
@@ -1359,7 +1529,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat724_lon1448.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>860.000000</td>
@@ -1383,7 +1553,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat2048_lon4096.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>490.000000</td>
@@ -1407,7 +1577,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat2896_lon5792.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>350.000000</td>
@@ -1431,7 +1601,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat1024_lon2048.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>540.000000</td>
@@ -1455,7 +1625,7 @@ if (window.Jupyter !== undefined) {
 <td>cmip6-pds_GISS-E2-1-G_historical_tas</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>47</td>
 <td>0</td>
 <td>220.000000</td>
@@ -1479,7 +1649,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat512_lon1024.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>490.000000</td>
@@ -1503,7 +1673,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat1448_lon2896.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>50</td>
 <td>0</td>
 <td>3000.000000</td>
@@ -1556,7 +1726,7 @@ if (window.Jupyter !== undefined) {
 <section id="option-1-performance-tests" class="level2">
 <h2 class="anchored" data-anchor-id="option-1-performance-tests">Option 1 Performance tests</h2>
 <div id="189ff377-a930-4833-90e8-01c6fffa9a98" class="cell" data-tags="[]" data-execution_count="15">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read_results('feature')['feature']['Aggregated feature'].drop(columns=['Type', 'Name', 'file'])</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read_results('feature')['feature']['Aggregated feature'].drop(columns=['Type', 'Name', 'file'])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 </section>
@@ -1582,19 +1752,19 @@ if (window.Jupyter !== undefined) {
 <p>From metrics during tests, the maximum read was 1 million bytes, or 1MB. If there are 185 req / second and each request reads 1mb of data, we need a throughput of 185mb/s. The base rate for bursting througput is 50kb/s for writes and 150kb/s for reads for every 1GB of data (see https://docs.aws.amazon.com/efs/latest/ug/performance.html#bursting).</p>
 <p>So we need storage for througput of 185000kb/s which is 1.2TB?!</p>
 <div id="49eed577-6931-4fde-9833-dfebd3dc3449" class="cell" data-tags="[]" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>cost_per_gb_month_storage <span class="op">=</span> <span class="fl">0.30</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>cost_per_gb_month_storage <span class="op">=</span> <span class="fl">0.30</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>required_storage_for_throughput <span class="op">=</span> <span class="dv">1233</span> <span class="co"># 1.2TB required to have a throughput of 185 mb/s</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Upper bound for estimated storage costs: $</span><span class="sc">{</span>required_storage_for_throughput <span class="op">*</span> cost_per_gb_month_storage<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Upper bound for estimated storage costs: $</span><span class="sc">{</span>required_storage_for_throughput <span class="op">*</span> cost_per_gb_month_storage<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Upper bound for estimated storage costs: $369.9</code></pre>
 </div>
 </div>
 <div id="86061a7d-d12f-40a8-8e4e-b8f0be0872de" class="cell" data-tags="[]" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>per_gb_read_cost <span class="op">=</span> <span class="fl">0.03</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>per_gb_read_cost <span class="op">=</span> <span class="fl">0.03</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>max_read_size_gb <span class="op">=</span> <span class="fl">0.001</span> <span class="co"># taken from maximum value of DataReadIOBytes metric from running tests</span></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming the same peak requests as GIBS, which is truly an upper threshold, this would be $14,400 😱a month</span></span>
 <span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>cost_per_month_for_reads <span class="op">=</span> max_daily_gibs_req <span class="op">*</span> max_read_size_gb <span class="op">*</span> per_gb_read_cost <span class="op">*</span> <span class="dv">30</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated cost for data transfer $</span><span class="sc">{</span>cost_per_month_for_reads<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated cost for data transfer $</span><span class="sc">{</span>cost_per_month_for_reads<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Estimated cost for data transfer $14400.0</code></pre>
 </div>
@@ -1603,12 +1773,12 @@ if (window.Jupyter !== undefined) {
 <section id="option-2-performance-tests" class="level2">
 <h2 class="anchored" data-anchor-id="option-2-performance-tests">Option 2 Performance tests</h2>
 <div id="3c520450-ef10-4d46-9d14-d46889dd1af4" class="cell" data-tags="[]" data-execution_count="34">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>read_results(<span class="st">'feature2'</span>)[<span class="st">'feature2'</span>][<span class="st">'Aggregated feature2'</span>].drop(columns<span class="op">=</span>[<span class="st">'Type'</span>, <span class="st">'Name'</span>, <span class="st">'file'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>read_results(<span class="st">'feature2'</span>)[<span class="st">'feature2'</span>][<span class="st">'Aggregated feature2'</span>].drop(columns<span class="op">=</span>[<span class="st">'Type'</span>, <span class="st">'Name'</span>, <span class="st">'file'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="34">
 <div>
 
 
-<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -1637,7 +1807,7 @@ if (window.Jupyter !== undefined) {
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>280.0</td>
@@ -1661,7 +1831,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat2896_lon5792.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>790.0</td>
@@ -1685,7 +1855,7 @@ if (window.Jupyter !== undefined) {
 <td>GLDAS_NOAH025_3H.A20230731.2100.021.nc4</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>47</td>
 <td>0</td>
 <td>380.0</td>
@@ -1709,7 +1879,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat4096_lon8192.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>140.0</td>
@@ -1733,7 +1903,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat1448_lon2896.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>410.0</td>
@@ -1757,7 +1927,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat5793_lon11586.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>210.0</td>
@@ -1781,7 +1951,7 @@ if (window.Jupyter !== undefined) {
 <td>pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>47</td>
 <td>0</td>
 <td>330.0</td>
@@ -1805,7 +1975,7 @@ if (window.Jupyter !== undefined) {
 <td>power_901_monthly_meteorology_utc.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>36</td>
 <td>0</td>
 <td>140.0</td>
@@ -1829,7 +1999,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat2048_lon4096.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>46</td>
 <td>0</td>
 <td>300.0</td>
@@ -1853,7 +2023,7 @@ if (window.Jupyter !== undefined) {
 <td>aws-noaa-oisst-feedstock_reference</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>40</td>
 <td>0</td>
 <td>120.0</td>
@@ -1877,7 +2047,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat724_lon1448.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>46</td>
 <td>0</td>
 <td>200.0</td>
@@ -1901,7 +2071,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat2048_lon4096.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>150.0</td>
@@ -1925,7 +2095,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat2896_lon5792.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>140.0</td>
@@ -1949,7 +2119,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat1024_lon2048.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>200.0</td>
@@ -1973,7 +2143,7 @@ if (window.Jupyter !== undefined) {
 <td>cmip6-pds_GISS-E2-1-G_historical_tas</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>42</td>
 <td>0</td>
 <td>120.0</td>
@@ -1997,7 +2167,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat512_lon1024.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>140.0</td>
@@ -2021,7 +2191,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat1448_lon2896.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>420.0</td>
@@ -2062,20 +2232,20 @@ if (window.Jupyter !== undefined) {
 <section id="additional-cost-to-baseline" class="level2">
 <h2 class="anchored" data-anchor-id="additional-cost-to-baseline">Additional cost to baseline</h2>
 <div id="dc5e1a17-1c86-4f7f-828c-a30dc659bcbc" class="cell" data-tags="[]" data-execution_count="35">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>cost_per_hour <span class="op">=</span> <span class="fl">0.034</span> <span class="co"># cache.t3.small</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>cost_per_hour <span class="op">=</span> <span class="fl">0.034</span> <span class="co"># cache.t3.small</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>hours_per_month <span class="op">=</span> <span class="dv">24</span> <span class="op">*</span> <span class="dv">30</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"cost per month for cache.t3.small: $</span><span class="sc">{</span>cost_per_hour <span class="op">*</span> hours_per_month<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"cost per month for cache.t3.small: $</span><span class="sc">{</span>cost_per_hour <span class="op">*</span> hours_per_month<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>cost per month for cache.t3.small: $24.48</code></pre>
 </div>
 </div>
 <div id="122f7939-e942-4c82-81a8-a2ecba6861c2" class="cell" data-tags="[]" data-execution_count="36">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>read_results(<span class="st">'feature3'</span>)[<span class="st">'feature3'</span>][<span class="st">'Aggregated feature3'</span>].drop(columns<span class="op">=</span>[<span class="st">'Type'</span>, <span class="st">'Name'</span>, <span class="st">'file'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>read_results(<span class="st">'feature3'</span>)[<span class="st">'feature3'</span>][<span class="st">'Aggregated feature3'</span>].drop(columns<span class="op">=</span>[<span class="st">'Type'</span>, <span class="st">'Name'</span>, <span class="st">'file'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="36">
 <div>
 
 
-<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -2104,7 +2274,7 @@ if (window.Jupyter !== undefined) {
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>1500.0</td>
@@ -2128,7 +2298,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat2896_lon5792.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>50</td>
 <td>0</td>
 <td>180.0</td>
@@ -2152,7 +2322,7 @@ if (window.Jupyter !== undefined) {
 <td>GLDAS_NOAH025_3H.A20230731.2100.021.nc4</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>420.0</td>
@@ -2176,7 +2346,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat4096_lon8192.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>430.0</td>
@@ -2200,7 +2370,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat1448_lon2896.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>430.0</td>
@@ -2224,7 +2394,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat5793_lon11586.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>47</td>
 <td>0</td>
 <td>130.0</td>
@@ -2248,7 +2418,7 @@ if (window.Jupyter !== undefined) {
 <td>pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>170.0</td>
@@ -2272,7 +2442,7 @@ if (window.Jupyter !== undefined) {
 <td>power_901_monthly_meteorology_utc.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>47</td>
 <td>0</td>
 <td>300.0</td>
@@ -2296,7 +2466,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat2048_lon4096.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>45</td>
 <td>0</td>
 <td>250.0</td>
@@ -2320,7 +2490,7 @@ if (window.Jupyter !== undefined) {
 <td>aws-noaa-oisst-feedstock_reference</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>43</td>
 <td>0</td>
 <td>190.0</td>
@@ -2344,7 +2514,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat724_lon1448.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>780.0</td>
@@ -2368,7 +2538,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat2048_lon4096.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>430.0</td>
@@ -2392,7 +2562,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat2896_lon5792.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>270.0</td>
@@ -2416,7 +2586,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat1024_lon2048.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>360.0</td>
@@ -2440,7 +2610,7 @@ if (window.Jupyter !== undefined) {
 <td>cmip6-pds_GISS-E2-1-G_historical_tas</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>160.0</td>
@@ -2464,7 +2634,7 @@ if (window.Jupyter !== undefined) {
 <td>single_chunk_store_lat512_lon1024.zarr</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>48</td>
 <td>0</td>
 <td>420.0</td>
@@ -2488,7 +2658,7 @@ if (window.Jupyter !== undefined) {
 <td>with_chunks_store_lat1448_lon2896.zarr</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>49</td>
 <td>0</td>
 <td>3000.0</td>
@@ -2522,21 +2692,21 @@ if (window.Jupyter !== undefined) {
 <section id="plot-results-together" class="level2">
 <h2 class="anchored" data-anchor-id="plot-results-together">Plot results together</h2>
 <div id="dcbba8c0-a5b0-4ee8-af4b-4a25d9adcb5e" class="cell" data-tags="[]" data-execution_count="37">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>dev_df <span class="op">=</span> results[<span class="st">'dev'</span>][<span class="ss">f'Aggregated dev'</span>]</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>dev_df <span class="op">=</span> results[<span class="st">'dev'</span>][<span class="ss">f'Aggregated dev'</span>]</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>feature2_df <span class="op">=</span> results[<span class="st">'feature2'</span>][<span class="ss">f'Aggregated feature2'</span>]</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>feature3_df <span class="op">=</span> results[<span class="st">'feature3'</span>][<span class="ss">f'Aggregated feature3'</span>]</span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>feature3_df.columns <span class="op">=</span> [<span class="st">'dataset'</span> <span class="cf">if</span> col <span class="op">==</span> <span class="st">'dataset'</span> <span class="cf">else</span> col <span class="op">+</span> <span class="st">' Feature3'</span> <span class="cf">for</span> col <span class="kw">in</span> feature3_df.columns]</span>
 <span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.merge(dev_df, feature2_df,  on<span class="op">=</span><span class="st">'dataset'</span>, suffixes<span class="op">=</span>(<span class="st">' Dev'</span>, <span class="st">' Feature2'</span>))</span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.merge(merged_df, feature3_df, on<span class="op">=</span><span class="st">'dataset'</span>, how<span class="op">=</span><span class="st">'outer'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.merge(merged_df, feature3_df, on<span class="op">=</span><span class="st">'dataset'</span>, how<span class="op">=</span><span class="st">'outer'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="df231728-eb36-4673-af5c-947daa10dd88" class="cell" data-tags="[]" data-execution_count="38">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>merged_df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>merged_df.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="38">
 <div>
 
 
-<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -2565,7 +2735,7 @@ if (window.Jupyter !== undefined) {
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
+<th data-quarto-table-cell-role="th">0</th>
 <td>NaN</td>
 <td>Aggregated</td>
 <td>49</td>
@@ -2589,7 +2759,7 @@ if (window.Jupyter !== undefined) {
 <td>downloaded_feature3_results/single_chunk_store...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
+<th data-quarto-table-cell-role="th">1</th>
 <td>NaN</td>
 <td>Aggregated</td>
 <td>38</td>
@@ -2613,7 +2783,7 @@ if (window.Jupyter !== undefined) {
 <td>downloaded_feature3_results/GLDAS_NOAH025_3H.A...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
+<th data-quarto-table-cell-role="th">2</th>
 <td>NaN</td>
 <td>Aggregated</td>
 <td>48</td>
@@ -2637,7 +2807,7 @@ if (window.Jupyter !== undefined) {
 <td>downloaded_feature3_results/with_chunks_store_...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
+<th data-quarto-table-cell-role="th">3</th>
 <td>NaN</td>
 <td>Aggregated</td>
 <td>50</td>
@@ -2661,7 +2831,7 @@ if (window.Jupyter !== undefined) {
 <td>downloaded_feature3_results/single_chunk_store...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
+<th data-quarto-table-cell-role="th">4</th>
 <td>NaN</td>
 <td>Aggregated</td>
 <td>48</td>
@@ -2692,17 +2862,17 @@ if (window.Jupyter !== undefined) {
 </div>
 </div>
 <div id="82001726-c7d6-4bbe-942c-d79bd23f0686" class="cell" data-tags="[]" data-execution_count="39">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>dataset_specs_external <span class="op">=</span> dataframe.csv_to_pandas(<span class="st">'zarr_info.csv'</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>dataset_specs_external <span class="op">=</span> dataframe.csv_to_pandas(<span class="st">'zarr_info.csv'</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>dataset_specs_fake <span class="op">=</span> dataframe.csv_to_pandas(<span class="st">'https://raw.githubusercontent.com/developmentseed/tile-benchmarking/18f90c0508733994709378a3d7fe5de2c84f34d7/03-e2e/zarr_info.csv'</span>)</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>dataset_specs_all <span class="op">=</span> pd.concat([dataset_specs_external, dataset_specs_fake])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>dataset_specs_all <span class="op">=</span> pd.concat([dataset_specs_external, dataset_specs_fake])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="fc18853f-7e5e-453e-9d66-d21b138d321b" class="cell" data-tags="[]" data-execution_count="40">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>dataset_specs_all.loc[dataset_specs_all[<span class="st">'collection_name'</span>] <span class="op">==</span> <span class="st">'GLDAS_NOAH025_3H.A20230731.2100.021.nc4'</span>, <span class="st">'chunk_size_mb'</span>] <span class="op">=</span> <span class="fl">3.29</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>dataset_specs_all.loc[dataset_specs_all[<span class="st">'collection_name'</span>] <span class="op">==</span> <span class="st">'pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc'</span>, <span class="st">'chunk_size_mb'</span>] <span class="op">=</span> <span class="fl">3.29</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>dataset_specs_all.loc[dataset_specs_all[<span class="st">'collection_name'</span>] <span class="op">==</span> <span class="st">'GLDAS_NOAH025_3H.A20230731.2100.021.nc4'</span>, <span class="st">'chunk_size_mb'</span>] <span class="op">=</span> <span class="fl">3.29</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>dataset_specs_all.loc[dataset_specs_all[<span class="st">'collection_name'</span>] <span class="op">==</span> <span class="st">'pr_day_ACCESS-CM2_historical_r1i1p1f1_gn_1950.nc'</span>, <span class="st">'chunk_size_mb'</span>] <span class="op">=</span> <span class="fl">3.29</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="8e34a300-f14f-429f-b2e5-ab811f14eb97" class="cell" data-tags="[]" data-execution_count="41">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">'Failure Rate Dev'</span>] <span class="op">=</span> merged_df[<span class="st">'Failure Count Dev'</span>]<span class="op">/</span>merged_df[<span class="st">'Request Count Dev'</span>] <span class="op">*</span> <span class="dv">100</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">'Failure Rate Dev'</span>] <span class="op">=</span> merged_df[<span class="st">'Failure Count Dev'</span>]<span class="op">/</span>merged_df[<span class="st">'Request Count Dev'</span>] <span class="op">*</span> <span class="dv">100</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">'Failure Rate Feature2'</span>] <span class="op">=</span> merged_df[<span class="st">'Failure Count Feature2'</span>]<span class="op">/</span>merged_df[<span class="st">'Request Count Feature2'</span>] <span class="op">*</span> <span class="dv">100</span></span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">'Failure Rate Feature3'</span>] <span class="op">=</span> merged_df[<span class="st">'Failure Count Feature3'</span>]<span class="op">/</span>merged_df[<span class="st">'Request Count Feature3'</span>] <span class="op">*</span> <span class="dv">100</span></span>
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -2715,12 +2885,12 @@ if (window.Jupyter !== undefined) {
 <span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    ]</span>
 <span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>].sort_values(<span class="st">'Average Response Time Dev'</span>)</span>
 <span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>merged_specs <span class="op">=</span> summary_df.merge(dataset_specs_all, left_on<span class="op">=</span><span class="st">'dataset'</span>, right_on<span class="op">=</span><span class="st">'collection_name'</span>)</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>merged_specs</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>merged_specs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="41">
 <div>
 
 
-<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -2744,7 +2914,7 @@ if (window.Jupyter !== undefined) {
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
+<th data-quarto-table-cell-role="th">0</th>
 <td>249.047163</td>
 <td>0.0</td>
 <td>128.626964</td>
@@ -2763,7 +2933,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
+<th data-quarto-table-cell-role="th">1</th>
 <td>290.079964</td>
 <td>0.0</td>
 <td>145.397714</td>
@@ -2782,7 +2952,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
+<th data-quarto-table-cell-role="th">2</th>
 <td>366.257629</td>
 <td>0.0</td>
 <td>263.579785</td>
@@ -2801,7 +2971,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
+<th data-quarto-table-cell-role="th">3</th>
 <td>452.211805</td>
 <td>0.0</td>
 <td>268.911446</td>
@@ -2820,7 +2990,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
+<th data-quarto-table-cell-role="th">4</th>
 <td>500.867121</td>
 <td>0.0</td>
 <td>378.581222</td>
@@ -2839,7 +3009,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">5</td>
+<th data-quarto-table-cell-role="th">5</th>
 <td>502.021901</td>
 <td>0.0</td>
 <td>232.858913</td>
@@ -2858,7 +3028,7 @@ if (window.Jupyter !== undefined) {
 <td>0.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">6</td>
+<th data-quarto-table-cell-role="th">6</th>
 <td>513.034740</td>
 <td>0.0</td>
 <td>163.106024</td>
@@ -2877,7 +3047,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">7</td>
+<th data-quarto-table-cell-role="th">7</th>
 <td>524.284276</td>
 <td>100.0</td>
 <td>1276.058463</td>
@@ -2896,7 +3066,7 @@ if (window.Jupyter !== undefined) {
 <td>NaN</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">8</td>
+<th data-quarto-table-cell-role="th">8</th>
 <td>536.867885</td>
 <td>0.0</td>
 <td>163.719092</td>
@@ -2915,7 +3085,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">9</td>
+<th data-quarto-table-cell-role="th">9</th>
 <td>574.316695</td>
 <td>0.0</td>
 <td>378.283140</td>
@@ -2934,7 +3104,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<th data-quarto-table-cell-role="th">10</th>
 <td>586.160854</td>
 <td>0.0</td>
 <td>234.491871</td>
@@ -2953,7 +3123,7 @@ if (window.Jupyter !== undefined) {
 <td>1.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">11</td>
+<th data-quarto-table-cell-role="th">11</th>
 <td>605.234564</td>
 <td>0.0</td>
 <td>517.463312</td>
@@ -2972,7 +3142,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">12</td>
+<th data-quarto-table-cell-role="th">12</th>
 <td>628.821530</td>
 <td>0.0</td>
 <td>501.937470</td>
@@ -2991,7 +3161,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">13</td>
+<th data-quarto-table-cell-role="th">13</th>
 <td>707.536122</td>
 <td>0.0</td>
 <td>454.779957</td>
@@ -3010,7 +3180,7 @@ if (window.Jupyter !== undefined) {
 <td>1.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">14</td>
+<th data-quarto-table-cell-role="th">14</th>
 <td>923.363868</td>
 <td>0.0</td>
 <td>265.304951</td>
@@ -3029,7 +3199,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">15</td>
+<th data-quarto-table-cell-role="th">15</th>
 <td>1596.383736</td>
 <td>0.0</td>
 <td>395.685591</td>
@@ -3048,7 +3218,7 @@ if (window.Jupyter !== undefined) {
 <td>2.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">16</td>
+<th data-quarto-table-cell-role="th">16</th>
 <td>3147.481403</td>
 <td>0.0</td>
 <td>632.604828</td>
@@ -3073,7 +3243,7 @@ if (window.Jupyter !== undefined) {
 </div>
 </div>
 <div id="3d7eefd4-2dd7-4c3f-aefe-71f19ebf8a97" class="cell" data-tags="[]" data-execution_count="26">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ylim <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">1000</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ylim <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">1000</span>)</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>xlim <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">35</span>)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>dev_line <span class="op">=</span> merged_specs.sort_values(<span class="st">'chunk_size_mb'</span>).hvplot.scatter(</span>
@@ -3094,7 +3264,7 @@ if (window.Jupyter !== undefined) {
 <span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine the two line plots</span></span>
 <span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>combined_plot <span class="op">=</span> dev_line  <span class="op">*</span> feature2_line <span class="op">*</span> feature3_line</span>
-<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>combined_plot.opts(legend_position<span class="op">=</span><span class="st">'right'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>combined_plot.opts(legend_position<span class="op">=</span><span class="st">'right'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 
 </div>
@@ -3169,7 +3339,7 @@ if (window.Jupyter !== undefined) {
 </div>
 <p><img src="scatterplot.png" class="img-fluid"></p>
 <div id="b50b5636-e0ba-4152-acf5-1938b755a1c4" class="cell" data-tags="[]" data-execution_count="27">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create box plots for each column and combine</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create box plots for each column and combine</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>cols <span class="op">=</span> [<span class="st">'Average Response Time Dev'</span>, <span class="st">'Average Response Time Feature2'</span>, <span class="st">'Average Response Time Feature3'</span>]</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>df_melted <span class="op">=</span> merged_df.melt(value_vars<span class="op">=</span>cols)</span>
@@ -3177,7 +3347,7 @@ if (window.Jupyter !== undefined) {
 <span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the box plot using the transformed data</span></span>
 <span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>plot <span class="op">=</span> df_melted.hvplot.box(by<span class="op">=</span><span class="st">'variable'</span>, y<span class="op">=</span><span class="st">'value'</span>, rot<span class="op">=</span><span class="dv">45</span>, ylim<span class="op">=</span>(<span class="dv">0</span>,<span class="dv">1500</span>))</span>
 <span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>plot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 
 </div>
@@ -3254,7 +3424,7 @@ if (window.Jupyter !== undefined) {
 <section id="appendix-getting-chunk-size-from-netcdf-datasets" class="level2">
 <h2 class="anchored" data-anchor-id="appendix-getting-chunk-size-from-netcdf-datasets">Appendix: Getting chunk size from NetCDF datasets</h2>
 <div id="bc7fc68b-c24d-4a38-9cb4-b244af585813" class="cell" data-tags="[]" data-execution_count="28">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> h5py</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> h5py</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
 <span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -3268,20 +3438,20 @@ if (window.Jupyter !== undefined) {
 <span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>        f.write(chunk)</span>
 <span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> h5py.File(local_filepath, <span class="st">'r'</span>)</span>
-<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>np.prod(f[<span class="st">'pr'</span>].chunks) <span class="op">*</span> f[<span class="st">'pr'</span>].dtype.itemsize <span class="op">/</span> <span class="dv">1024</span> <span class="op">/</span> <span class="dv">1024</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>np.prod(f[<span class="st">'pr'</span>].chunks) <span class="op">*</span> f[<span class="st">'pr'</span>].dtype.itemsize <span class="op">/</span> <span class="dv">1024</span> <span class="op">/</span> <span class="dv">1024</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="28">
 <pre><code>3.2958984375</code></pre>
 </div>
 </div>
 <div id="5f6b10d9-5f90-4941-825f-fd69fcb62e7f" class="cell" data-tags="[]" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 ls s3:<span class="op">//</span>podaac<span class="op">-</span>ops<span class="op">-</span>cumulus<span class="op">-</span>protected<span class="op">/</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>aws s3 ls s3:<span class="op">//</span>podaac<span class="op">-</span>ops<span class="op">-</span>cumulus<span class="op">-</span>protected<span class="op">/</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 An error occurred (AccessDenied) when calling the ListObjectsV2 operation: Access Denied</code></pre>
 </div>
 </div>
 <div id="d4230664-0187-4805-9b74-eb716de87a62" class="cell" data-tags="[]" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> s3fs </span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> s3fs </span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
 <span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Requires credentials</span></span>
@@ -3298,7 +3468,7 @@ An error occurred (AccessDenied) when calling the ListObjectsV2 operation: Acces
 <span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> xr.open_dataset(s3_fs.<span class="bu">open</span>(s3url), engine<span class="op">=</span><span class="st">'h5netcdf'</span>)</span>
 <span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>    chunks <span class="op">=</span> ds[variable].encoding[<span class="st">'chunksizes'</span>]</span>
 <span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>    chunksize <span class="op">=</span> np.prod(chunks) <span class="op">*</span> ds[variable].dtype.itemsize <span class="op">/</span> <span class="dv">1024</span> <span class="op">/</span> <span class="dv">1024</span></span>
-<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Chunk size for </span><span class="sc">{</span>s3url<span class="sc">}</span><span class="ss"> variable </span><span class="sc">{</span>variable<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>chunksize<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Chunk size for </span><span class="sc">{</span>s3url<span class="sc">}</span><span class="ss"> variable </span><span class="sc">{</span>variable<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>chunksize<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <pre><code>[{'dataset_url': 's3://podaac-ops-cumulus-protected/MUR-JPL-L4-GLOB-v4.1/20231107090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc',
   'variable': 'analysed_sst',
@@ -3321,383 +3491,256 @@ An error occurred (AccessDenied) when calling the ListObjectsV2 operation: Acces
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
     }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const disableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'prefetch';
-    }
-  }
-  const enableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'stylesheet';
-    }
-  }
-  const manageTransitions = (selector, allowTransitions) => {
-    const els = window.document.querySelectorAll(selector);
-    for (let i=0; i < els.length; i++) {
-      const el = els[i];
-      if (allowTransitions) {
-        el.classList.remove('notransition');
-      } else {
-        el.classList.add('notransition');
-      }
-    }
-  }
-  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
-    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
-    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
-    let newTheme = '';
-    if(darkModeDefault) {
-      newTheme = isAlternate ? baseTheme : alternateTheme;
-    } else {
-      newTheme = isAlternate ? alternateTheme : baseTheme;
-    }
-    const changeGiscusTheme = () => {
-      // From: https://github.com/giscus/giscus/issues/336
-      const sendMessage = (message) => {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return;
-        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
-      }
-      sendMessage({
-        setConfig: {
-          theme: newTheme
-        }
-      });
-    }
-    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
-    if (isGiscussLoaded) {
-      changeGiscusTheme();
-    }
-  }
-  const toggleColorMode = (alternate) => {
-    // Switch the stylesheets
-    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
-    manageTransitions('#quarto-margin-sidebar .nav-link', false);
-    if (alternate) {
-      enableStylesheet(alternateStylesheets);
-      for (const sheetNode of alternateStylesheets) {
-        if (sheetNode.id === "quarto-bootstrap") {
-          toggleBodyColorMode(sheetNode);
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
         }
       }
-    } else {
-      disableStylesheet(alternateStylesheets);
-      toggleBodyColorPrimary();
-    }
-    manageTransitions('#quarto-margin-sidebar .nav-link', true);
-    // Switch the toggles
-    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
-    for (let i=0; i < toggles.length; i++) {
-      const toggle = toggles[i];
-      if (toggle) {
-        if (alternate) {
-          toggle.classList.add("alternate");     
-        } else {
-          toggle.classList.remove("alternate");
-        }
-      }
-    }
-    // Hack to workaround the fact that safari doesn't
-    // properly recolor the scrollbar when toggling (#1455)
-    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
-      manageTransitions("body", false);
-      window.scrollTo(0, 1);
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        manageTransitions("body", true);
-      }, 40);  
-    }
-  }
-  const isFileUrl = () => { 
-    return window.location.protocol === 'file:';
-  }
-  const hasAlternateSentinel = () => {  
-    let styleSentinel = getColorSchemeSentinel();
-    if (styleSentinel !== null) {
-      return styleSentinel === "alternate";
-    } else {
       return false;
     }
-  }
-  const setStyleSentinel = (alternate) => {
-    const value = alternate ? "alternate" : "default";
-    if (!isFileUrl()) {
-      window.localStorage.setItem("quarto-color-scheme", value);
-    } else {
-      localAlternateSentinel = value;
-    }
-  }
-  const getColorSchemeSentinel = () => {
-    if (!isFileUrl()) {
-      const storageValue = window.localStorage.getItem("quarto-color-scheme");
-      return storageValue != null ? storageValue : localAlternateSentinel;
-    } else {
-      return localAlternateSentinel;
-    }
-  }
-  const darkModeDefault = false;
-  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
-  // Dark / light mode switch
-  window.quartoToggleColorScheme = () => {
-    // Read the current dark / light value 
-    let toAlternate = !hasAlternateSentinel();
-    toggleColorMode(toAlternate);
-    setStyleSentinel(toAlternate);
-    toggleGiscusIfUsed(toAlternate, darkModeDefault);
-  };
-  // Ensure there is a toggle, if there isn't float one in the top right
-  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
-    const a = window.document.createElement('a');
-    a.classList.add('top-right');
-    a.classList.add('quarto-color-scheme-toggle');
-    a.href = "";
-    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
-    const i = window.document.createElement("i");
-    i.classList.add('bi');
-    a.appendChild(i);
-    window.document.body.appendChild(a);
-  }
-  // Switch to dark mode if need be
-  if (hasAlternateSentinel()) {
-    toggleColorMode(true);
-  } else {
-    toggleColorMode(false);
-  }
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
       }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
     }
-    return false;
-  }
-  const onCopySuccess = function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  }
-  const getTextToCopy = function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
       for (const childEl of codeEl.children) {
         if (isCodeAnnotation(childEl)) {
           childEl.remove();
         }
       }
       return codeEl.innerText;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-    text: getTextToCopy
-  });
-  clipboard.on('success', onCopySuccess);
-  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
-    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-      text: getTextToCopy,
-      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
     });
-    clipboardModal.on('success', onCopySuccess);
-  }
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp("https:\/\/developmentseed\.org\/tile-benchmarking");
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
     }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/developmentseed\.org\/tile-benchmarking");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
-    });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
-    }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
-        return container.innerHTML
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -3705,185 +3748,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="../02-run-tests/06-cmr-netcdf.html" class="pagination-link" aria-label="Tile Generation Benchmarks using CMR">
